@@ -23,7 +23,7 @@ constexpr uint32_t stepSizes[] = {
 };
 
 //SOUND CONSTANTS
-  int volume = 10;
+  int volume = 100;
 
 //Constants
   const uint32_t interval = 100; //Display update interval
@@ -95,10 +95,27 @@ void setRow(uint8_t rowIdx){
   digitalWrite(REN_PIN, HIGH);
 }
 
+// SAW
+// void sampleISR() {
+//   static uint32_t phaseAcc = 0;
+//   phaseAcc += currentStepSize;
+//   int32_t Vout = (phaseAcc >> 24) - 128;
+//   Vout = (Vout * volume) / 100;
+//   analogWrite(OUTR_PIN, Vout + 128);
+// }
+
+// TRIANGLE
 void sampleISR() {
+  // Update the phase accumulator by the current step size
   static uint32_t phaseAcc = 0;
   phaseAcc += currentStepSize;
-  int32_t Vout = (phaseAcc >> 24) - 128;
+  // Calculate the output voltage based on the current phase
+  int32_t Vout;
+  if (phaseAcc < UINT32_MAX / 2) {
+    Vout = (phaseAcc >> 23) - 256; // Increasing slope
+  } else {
+    Vout = ((UINT32_MAX - phaseAcc) >> 23) - 256; // Decreasing slope
+  }
   Vout = (Vout * volume) / 100;
   analogWrite(OUTR_PIN, Vout + 128);
 }
