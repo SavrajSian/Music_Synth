@@ -4,31 +4,35 @@
 #include <STM32FreeRTOS.h>
 
 // Calculate step sizes during compilation
-constexpr uint32_t samplingFreq = 22050; // Hz
-constexpr double twelfthRootOfTwo = pow(2.0, 1.0/12.0); // 12th root of 2
-constexpr uint32_t calculateStepSize(float frequency) {
+constexpr uint32_t samplingFreq = 22050;                  // Hz
+constexpr double twelfthRootOfTwo = pow(2.0, 1.0 / 12.0); // 12th root of 2
+constexpr uint32_t calculateStepSize(float frequency)
+{
   return static_cast<uint32_t>((pow(2, 32) * frequency) / samplingFreq);
 }
 constexpr uint32_t stepSizes[] = {
-  calculateStepSize(261.63f), // C
-  calculateStepSize(277.18f), // C#
-  calculateStepSize(293.66f), // D
-  calculateStepSize(311.13f), // D#
-  calculateStepSize(329.63f), // E
-  calculateStepSize(349.23f), // F
-  calculateStepSize(369.99f), // F#
-  calculateStepSize(392.00f), // G
-  calculateStepSize(415.30f), // G#
-  calculateStepSize(440.00f), // A
-  calculateStepSize(466.16f), // A#
-  calculateStepSize(493.88f)  // B
+    calculateStepSize(261.63f), // C
+    calculateStepSize(277.18f), // C#
+    calculateStepSize(293.66f), // D
+    calculateStepSize(311.13f), // D#
+    calculateStepSize(329.63f), // E
+    calculateStepSize(349.23f), // F
+    calculateStepSize(369.99f), // F#
+    calculateStepSize(392.00f), // G
+    calculateStepSize(415.30f), // G#
+    calculateStepSize(440.00f), // A
+    calculateStepSize(466.16f), // A#
+    calculateStepSize(493.88f)  // B
 };
 
 // Audio definitions
-const uint32_t interval = 100; //Display update interval
+const uint32_t interval = 100; // Display update interval
 volatile uint32_t currentStepSize;
-const char* notes[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#",  "A", "A#", "B"};
+const char *notes[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 volatile int key = -1;
+volatile int volume = 4;
+
+SemaphoreHandle_t keyArrayMutex;
 
 // Pin definitions
 // Row select and enable
@@ -45,7 +49,6 @@ const int C3_PIN = D1;
 const int OUT_PIN = D11;
 
 // Audio analogue out
-int volume = 100;
 const int OUTL_PIN = A4;
 const int OUTR_PIN = A3;
 
@@ -63,29 +66,33 @@ const int HKOE_BIT = 6;
 U8G2_SSD1305_128X32_NONAME_F_HW_I2C u8g2(U8G2_R0);
 
 // Function to set outputs using key matrix
-void setOutMuxBit(const uint8_t bitIdx, const bool value) {
-      digitalWrite(REN_PIN,LOW);
-      digitalWrite(RA0_PIN, bitIdx & 0x01);
-      digitalWrite(RA1_PIN, bitIdx & 0x02);
-      digitalWrite(RA2_PIN, bitIdx & 0x04);
-      digitalWrite(OUT_PIN,value);
-      digitalWrite(REN_PIN,HIGH);
-      delayMicroseconds(2);
-      digitalWrite(REN_PIN,LOW);
+void setOutMuxBit(const uint8_t bitIdx, const bool value)
+{
+  digitalWrite(REN_PIN, LOW);
+  digitalWrite(RA0_PIN, bitIdx & 0x01);
+  digitalWrite(RA1_PIN, bitIdx & 0x02);
+  digitalWrite(RA2_PIN, bitIdx & 0x04);
+  digitalWrite(OUT_PIN, value);
+  digitalWrite(REN_PIN, HIGH);
+  delayMicroseconds(2);
+  digitalWrite(REN_PIN, LOW);
 }
 
-uint8_t readCols(){
+uint8_t readCols()
+{
   uint8_t colVals = 0;
+  int8_t rotation = 0;
   // Read column values
   colVals |= (digitalRead(C0_PIN) << 0);
   colVals |= (digitalRead(C1_PIN) << 1);
   colVals |= (digitalRead(C2_PIN) << 2);
   colVals |= (digitalRead(C3_PIN) << 3);
-  // Serial.println(colVals, BIN);
+
   return colVals;
 }
 
-void setRow(uint8_t rowIdx){
+void setRow(uint8_t rowIdx)
+{
   // Disable row select enable
   digitalWrite(REN_PIN, LOW);
   // Set row select pins
@@ -98,113 +105,160 @@ void setRow(uint8_t rowIdx){
 
 // Rename function from sampleISRn to sampleISR to use
 // SAW
-void sampleISR() {
+void sampleISR2()
+{
   uint32_t stepSize = currentStepSize;
   static uint32_t phaseAcc = 0;
   phaseAcc += stepSize;
   int32_t Vout = (phaseAcc >> 24) - 128;
-  Vout = (Vout * volume) / 100;
+  Vout = Vout >> (8 - volume);
   analogWrite(OUTR_PIN, Vout + 128);
 }
 
 // SQUARE
-void sampleISR2() {
+void sampleISR()
+{
   uint32_t stepSize = currentStepSize;
   static uint32_t phaseAcc = 0;
   phaseAcc += stepSize;
   int32_t Vout;
-  if (phaseAcc <= UINT32_MAX/2) {
+  if (phaseAcc <= UINT32_MAX / 2)
+  {
     Vout = 128;
-  } else {
+  }
+  else
+  {
     Vout = 0;
   }
-  Vout = (Vout * volume) / 100;
+  Vout = Vout >> (8 - volume);
   analogWrite(OUTR_PIN, Vout);
 }
+
 // TRIANGLE
-void sampleISR3() {
+void sampleISR3()
+{
   uint32_t stepSize = currentStepSize;
   static uint32_t phaseAcc = 0;
   phaseAcc += stepSize;
   int32_t Vout = 0;
-  if (phaseAcc < 0x80000000) {
+  if (phaseAcc < 0x80000000)
+  {
     Vout = (phaseAcc >> 23) - 256;
-  } else {
+  }
+  else
+  {
     Vout = (0xFFFFFFFF - phaseAcc) >> 23;
     Vout = -256 + (Vout & 0xFF);
   }
-  Vout = (Vout * volume) / 100;
+  Vout = Vout >> (8 - volume);
   analogWrite(OUTR_PIN, Vout + 128);
 }
 
-void scanKeysTask(void * pvParameters) {
-  const TickType_t xFrequency = 50/portTICK_PERIOD_MS;
+void scanKeysTask(void *pvParameters)
+{
+  const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
   TickType_t xLastWakeTime = xTaskGetTickCount();
   volatile uint8_t keyArray[7];
   uint32_t stepSize;
+  uint8_t prevAB = 0;
+  uint8_t currVol = 0;
 
-  while (1){
+  while (1)
+  {
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
     key = -1;
     // Loop over rows 0 to 2 to detect key presses
-    for (uint8_t row = 0; row < 3; row++) {
+    for (uint8_t row = 0; row < 4; row++)
+    {
       setRow(row);
       delayMicroseconds(3);
+
+      xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
       keyArray[row] = readCols();
       // Translate binary key values to key position (1-12)
-      if (keyArray[row] == 0b1110) {
-        key = (4*row);
+      if (row < 3)
+      {
+        if (keyArray[row] == 0b1110)
+        {
+          key = (4 * row);
+        }
+        else if (keyArray[row] == 0b1101)
+        {
+          key = (4 * row) + 1;
+        }
+        else if (keyArray[row] == 0b1011)
+        {
+          key = (4 * row) + 2;
+        }
+        else if (keyArray[row] == 0b0111)
+        {
+          key = (4 * row) + 3;
+        }
       }
-      else if (keyArray[row] == 0b1101) {
-        key = (4*row)+1;
+      // Check VOLUME knob3
+      currVol = keyArray[3] & 0x03;
+      if ((currVol == 0b10 && prevAB == 0b11) ||
+          (currVol == 0b01 && prevAB == 0b00))
+      {
+        volume = min(volume + 1, 8);
       }
-      else if (keyArray[row] == 0b1011) {
-        key = (4*row)+2;
+      else if ((currVol == 0b11 && prevAB == 0b10) ||
+               (currVol == 0b00 && prevAB == 0b01))
+      {
+        volume = max(volume - 1, 0);
       }
-      else if (keyArray[row] == 0b0111) {
-        key = (4*row)+3;
-      }
+      xSemaphoreGive(keyArrayMutex);
+      prevAB = currVol;
     }
     // If no key pressed disable sound
-    if (key == -1){
+    if (key == -1)
+    {
       stepSize = 0;
     }
     // Assign stepSize value to play sound
-    else {
+    else
+    {
       stepSize = stepSizes[key];
     }
-  __atomic_store_n(&currentStepSize, stepSize, __ATOMIC_RELAXED);
+    __atomic_store_n(&currentStepSize, stepSize, __ATOMIC_RELAXED);
   }
 }
 
-void displayKeysTask(void * pvParameters) {
-  const TickType_t xFrequency = 100/portTICK_PERIOD_MS;
+void displayKeysTask(void *pvParameters)
+{
+  const TickType_t xFrequency = 100 / portTICK_PERIOD_MS;
   TickType_t xLastWakeTime = xTaskGetTickCount();
-  while (1){
+  while (1)
+  {
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
-    Serial.println(key);
 
     u8g2.clearBuffer();
     u8g2.setFont(u8g2_font_profont10_tf);
-    u8g2.setCursor(2,20);
+    u8g2.setCursor(90, 10);
+    u8g2.print("Vol:");
+    u8g2.print(volume);
+    u8g2.setCursor(2, 10);
 
     // Do not display key
-    if (key == -1){
+    if (key == -1)
+    {
       u8g2.print("KEY: --");
-      u8g2.setCursor(2,30);
-      u8g2.sendBuffer(); 
+      u8g2.setCursor(2, 20);
+      u8g2.sendBuffer();
     }
     // Display key
-    else {
+    else
+    {
       u8g2.print("KEY: ");
       u8g2.print(notes[key]);
-      u8g2.sendBuffer(); 
+      u8g2.sendBuffer();
     }
-  digitalToggle(LED_BUILTIN);    
+    digitalToggle(LED_BUILTIN);
   }
 }
 
-void setup() {
+void setup()
+{
   // Set pin directions
   pinMode(RA0_PIN, OUTPUT);
   pinMode(RA1_PIN, OUTPUT);
@@ -223,20 +277,23 @@ void setup() {
   pinMode(JOYY_PIN, INPUT);
 
   // Initialise display
-  setOutMuxBit(DRST_BIT, LOW);  //Assert display logic reset
+  setOutMuxBit(DRST_BIT, LOW); // Assert display logic reset
   delayMicroseconds(2);
-  setOutMuxBit(DRST_BIT, HIGH);  //Release display logic reset
+  setOutMuxBit(DRST_BIT, HIGH); // Release display logic reset
   u8g2.begin();
-  setOutMuxBit(DEN_BIT, HIGH);  //Enable display power supply
+  setOutMuxBit(DEN_BIT, HIGH); // Enable display power supply
 
   // Initialise UART
   Serial.begin(9600);
-  Serial.println("Hello World");
-  
-  for (int i = 0; i < 12; i++) {
-  Serial.print(stepSizes[i]);
-  Serial.print(" ");
+
+  for (int i = 0; i < 12; i++)
+  {
+    Serial.print(stepSizes[i]);
+    Serial.print(" ");
   }
+  // Create the mutex and assign its handle
+  keyArrayMutex = xSemaphoreCreateMutex();
+
   // Create timer for audio
   TIM_TypeDef *Instance = TIM1;
   HardwareTimer *sampleTimer = new HardwareTimer(Instance);
@@ -250,9 +307,9 @@ void setup() {
   TaskHandle_t displayKeysHandle = NULL;
   xTaskCreate(displayKeysTask, "displayKeys", 256, NULL, 1, &displayKeysHandle);
   vTaskStartScheduler();
-
 }
 
-void loop() {
+void loop()
+{
   delay(100);
 }
