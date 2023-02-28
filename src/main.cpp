@@ -31,6 +31,7 @@ volatile uint32_t currentStepSize;
 const char *notes[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 volatile int key = -1;
 volatile int volume = 4;
+volatile uint8_t keyArray[7];
 
 SemaphoreHandle_t keyArrayMutex;
 
@@ -158,10 +159,10 @@ void scanKeysTask(void *pvParameters)
 {
   const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
   TickType_t xLastWakeTime = xTaskGetTickCount();
-  volatile uint8_t keyArray[7];
   uint32_t stepSize;
   uint8_t prevAB = 0;
   uint8_t currVol = 0;
+  int prevTransition = 0;
 
   while (1)
   {
@@ -200,12 +201,27 @@ void scanKeysTask(void *pvParameters)
       if ((currVol == 0b10 && prevAB == 0b11) ||
           (currVol == 0b01 && prevAB == 0b00))
       {
-        volume = min(volume + 1, 8);
+        __atomic_store_n(&volume, min(__atomic_load_n(&volume, __ATOMIC_RELAXED) + 1, 8), __ATOMIC_RELAXED);
+        prevTransition = 1;
       }
       else if ((currVol == 0b11 && prevAB == 0b10) ||
                (currVol == 0b00 && prevAB == 0b01))
       {
-        volume = max(volume - 1, 0);
+        __atomic_store_n(&volume, max(__atomic_load_n(&volume, __ATOMIC_RELAXED) - 1, 0), __ATOMIC_RELAXED);
+        prevTransition = -1;
+      }
+      else if (currVol == 0b00 && prevAB == 0b11)
+      {
+        if (prevTransition == 1)
+        {
+          __atomic_store_n(&volume, min(__atomic_load_n(&volume, __ATOMIC_RELAXED) + 1, 8), __ATOMIC_RELAXED);
+          prevTransition = 1;
+        }
+        else if (prevTransition == -1)
+        {
+          __atomic_store_n(&volume, max(__atomic_load_n(&volume, __ATOMIC_RELAXED) - 1, 0), __ATOMIC_RELAXED);
+          prevTransition = -1;
+        }
       }
       xSemaphoreGive(keyArrayMutex);
       prevAB = currVol;
