@@ -228,17 +228,37 @@ void sampleISR()
         static uint32_t phaseAcc = 0;
         phaseAcc += stepSize;
         int32_t Vout = 0;
-        if (phaseAcc < 0x80000000)
+        if (phaseAcc < UINT32_MAX / 2)
         {
-          Vout = (phaseAcc >> 23) - 256;
+          Vout = (phaseAcc >> 23) - 128;
         }
         else
         {
-          Vout = (0xFFFFFFFF - phaseAcc) >> 23;
-          Vout = -256 + (Vout & 0xFF);
+          Vout = (UINT32_MAX - phaseAcc) >> 23;
+          Vout = -128 + (Vout & 0xFF);
         }
-        Vout = Vout >> (8 - volume);
+
+        Vout = (Vout * volume) / 8;
         analogWrite(OUTR_PIN, Vout + 128);
+      }
+      break;
+    case 3:
+      // SINE
+      {
+        uint32_t stepSize = currentStepSize;
+        static uint32_t phaseAcc = 0;
+        phaseAcc += stepSize;
+        int32_t Vout;
+        if (phaseAcc < UINT32_MAX / 2)
+        {
+          float sinValue = sin(phaseAcc * 2.0 * PI / UINT32_MAX);
+          Vout = 128 + 1 * sinValue;
+          Vout = Vout >> (8 - volume);
+        }
+        else {
+          Vout = 0;
+        }
+        analogWrite(OUTR_PIN, Vout);
       }
       break;
     default:
@@ -315,7 +335,7 @@ void scanKeysTask(void *pvParameters)
 
   // Knob Constructors
   Knob volumeKnob(0, 8, &volume);
-  Knob functionKnob(0, 2, &function);
+  Knob functionKnob(0, 3, &function);
   Knob octaveKnob(2, 8, &octaveSelect);
 
   while (1)
@@ -403,6 +423,9 @@ void displayKeysTask(void *pvParameters)
         break;
       case 2:
         u8g2.print("Triangle");
+        break;
+      case 3:
+        u8g2.print("Sine");
         break;
       default:
         u8g2.print("Unknown sound");
