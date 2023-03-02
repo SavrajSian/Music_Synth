@@ -3,37 +3,122 @@
 #include <HardwareTimer.h>
 #include <STM32FreeRTOS.h>
 
-// Calculate step sizes during compilation
+// Calculate step sizes and frequencies during compilation
 constexpr uint32_t samplingFreq = 22050;                  // Hz
 constexpr double twelfthRootOfTwo = pow(2.0, 1.0 / 12.0); // 12th root of 2
+
+// Returns frequency for given note
+constexpr uint32_t calculateFreq(float semiTone)
+{
+  return static_cast<uint32_t>(440.00f * std::pow(2.00f, static_cast<float>(semiTone) / 12.0f));
+}
+// Returns step size from note
 constexpr uint32_t calculateStepSize(float frequency)
 {
   return static_cast<uint32_t>((pow(2, 32) * frequency) / samplingFreq);
 }
+// 2 - 8 Octaves of step sizes - super long
 constexpr uint32_t stepSizes[] = {
-    calculateStepSize(261.63f), // C
-    calculateStepSize(277.18f), // C#
-    calculateStepSize(293.66f), // D
-    calculateStepSize(311.13f), // D#
-    calculateStepSize(329.63f), // E
-    calculateStepSize(349.23f), // F
-    calculateStepSize(369.99f), // F#
-    calculateStepSize(392.00f), // G
-    calculateStepSize(415.30f), // G#
-    calculateStepSize(440.00f), // A
-    calculateStepSize(466.16f), // A#
-    calculateStepSize(493.88f)  // B
+  calculateStepSize(calculateFreq(-33)),// C2
+  calculateStepSize(calculateFreq(-32)),// C#2
+  calculateStepSize(calculateFreq(-31)),// D2
+  calculateStepSize(calculateFreq(-30)),// D#2
+  calculateStepSize(calculateFreq(-29)),// E2
+  calculateStepSize(calculateFreq(-28)),// F2
+  calculateStepSize(calculateFreq(-27)),// F#2
+  calculateStepSize(calculateFreq(-26)),// G2
+  calculateStepSize(calculateFreq(-25)),// G#2
+  calculateStepSize(calculateFreq(-24)),// A2
+  calculateStepSize(calculateFreq(-23)),// A#2
+  calculateStepSize(calculateFreq(-22)),// B2
+  calculateStepSize(calculateFreq(-21)),// C3
+  calculateStepSize(calculateFreq(-20)),// C#3
+  calculateStepSize(calculateFreq(-19)),// D3
+  calculateStepSize(calculateFreq(-18)),// D#3
+  calculateStepSize(calculateFreq(-17)),// E3
+  calculateStepSize(calculateFreq(-16)),// F3
+  calculateStepSize(calculateFreq(-15)),// F#3
+  calculateStepSize(calculateFreq(-14)),// G3
+  calculateStepSize(calculateFreq(-13)),// G#3
+  calculateStepSize(calculateFreq(-12)),// A3
+  calculateStepSize(calculateFreq(-11)),// A#3
+  calculateStepSize(calculateFreq(-10)),// B3
+  calculateStepSize(calculateFreq(-9)), // C4
+  calculateStepSize(calculateFreq(-8)), // C#4
+  calculateStepSize(calculateFreq(-7)), // D4
+  calculateStepSize(calculateFreq(-6)), // D#4
+  calculateStepSize(calculateFreq(-5)), // E4
+  calculateStepSize(calculateFreq(-4)), // F4
+  calculateStepSize(calculateFreq(-3)), // F#4
+  calculateStepSize(calculateFreq(-2)), // G4
+  calculateStepSize(calculateFreq(-1)), // G#4
+  calculateStepSize(calculateFreq(0)), // A4
+  calculateStepSize(calculateFreq(1)), // A#4
+  calculateStepSize(calculateFreq(2)), // B4
+  calculateStepSize(calculateFreq(3)), // C5
+  calculateStepSize(calculateFreq(4)), // C#5
+  calculateStepSize(calculateFreq(5)), // D5
+  calculateStepSize(calculateFreq(6)), // D#5
+  calculateStepSize(calculateFreq(7)), // E5
+  calculateStepSize(calculateFreq(8)), // F5
+  calculateStepSize(calculateFreq(9)), // F#5
+  calculateStepSize(calculateFreq(10)), // G5
+  calculateStepSize(calculateFreq(11)), // G#5
+  calculateStepSize(calculateFreq(12)), // A5
+  calculateStepSize(calculateFreq(13)), // A#5
+  calculateStepSize(calculateFreq(14)), // B5
+  calculateStepSize(calculateFreq(15)), // C6
+  calculateStepSize(calculateFreq(16)), // C#6
+  calculateStepSize(calculateFreq(17)), // D6
+  calculateStepSize(calculateFreq(18)), // D#6
+  calculateStepSize(calculateFreq(19)), // E6
+  calculateStepSize(calculateFreq(20)), // F6
+  calculateStepSize(calculateFreq(21)), // F#6
+  calculateStepSize(calculateFreq(22)), // G6
+  calculateStepSize(calculateFreq(23)), // G#6
+  calculateStepSize(calculateFreq(24)), // A6
+  calculateStepSize(calculateFreq(25)), // A#6
+  calculateStepSize(calculateFreq(26)), // B6
+  calculateStepSize(calculateFreq(27)), // C7
+  calculateStepSize(calculateFreq(28)), // C#7
+  calculateStepSize(calculateFreq(29)), // D7
+  calculateStepSize(calculateFreq(30)), // D#7
+  calculateStepSize(calculateFreq(31)), // E7
+  calculateStepSize(calculateFreq(32)), // F7
+  calculateStepSize(calculateFreq(33)), // F#7
+  calculateStepSize(calculateFreq(34)), // G7
+  calculateStepSize(calculateFreq(35)), // G#7
+  calculateStepSize(calculateFreq(36)), // A7
+  calculateStepSize(calculateFreq(37)), // A#7
+  calculateStepSize(calculateFreq(38)), // B7
+  calculateStepSize(calculateFreq(39)), // C8
+  calculateStepSize(calculateFreq(40)), // C#8
+  calculateStepSize(calculateFreq(41)), // D8
+  calculateStepSize(calculateFreq(42)), // D#8
+  calculateStepSize(calculateFreq(43)), // E8
+  calculateStepSize(calculateFreq(44)), // F8
+  calculateStepSize(calculateFreq(45)), // F#8
+  calculateStepSize(calculateFreq(46)), // G8
+  calculateStepSize(calculateFreq(47)), // G#8
+  calculateStepSize(calculateFreq(48)), // A8
+  calculateStepSize(calculateFreq(49)), // A#8
+  calculateStepSize(calculateFreq(50))  // B8
 };
 
 // Audio definitions
 const uint32_t interval = 100; // Display update interval
 volatile uint32_t currentStepSize;
 const char *notes[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-volatile int key = -1;
-volatile int volume = 4;
-volatile uint8_t keyArray[7];
 
+// Key Matrix
+volatile int key = -1;
+volatile uint8_t keyArray[7];
 SemaphoreHandle_t keyArrayMutex;
+
+// Knob Variables
+volatile int volume = 4;
+volatile int function = 0;
+volatile int octaveSelect = 4;
 
 // Pin definitions
 // Row select and enable
@@ -82,7 +167,6 @@ void setOutMuxBit(const uint8_t bitIdx, const bool value)
 uint8_t readCols()
 {
   uint8_t colVals = 0;
-  int8_t rotation = 0;
   // Read column values
   colVals |= (digitalRead(C0_PIN) << 0);
   colVals |= (digitalRead(C1_PIN) << 1);
@@ -104,55 +188,63 @@ void setRow(uint8_t rowIdx)
   digitalWrite(REN_PIN, HIGH);
 }
 
-// Rename function from sampleISRn to sampleISR to use
-// SAW
-void sampleISR2()
-{
-  uint32_t stepSize = currentStepSize;
-  static uint32_t phaseAcc = 0;
-  phaseAcc += stepSize;
-  int32_t Vout = (phaseAcc >> 24) - 128;
-  Vout = Vout >> (8 - volume);
-  analogWrite(OUTR_PIN, Vout + 128);
-}
-
-// SQUARE
 void sampleISR()
 {
-  uint32_t stepSize = currentStepSize;
-  static uint32_t phaseAcc = 0;
-  phaseAcc += stepSize;
-  int32_t Vout;
-  if (phaseAcc <= UINT32_MAX / 2)
-  {
-    Vout = 128;
+  switch(function) {
+    case 0:
+      // SAW
+      {
+        uint32_t stepSize = currentStepSize;
+        static uint32_t phaseAcc = 0;
+        phaseAcc += stepSize;
+        int32_t Vout = (phaseAcc >> 24) - 128;
+        Vout = Vout >> (8 - volume);
+        analogWrite(OUTR_PIN, Vout + 128);
+      }
+      break;
+    case 1:
+      // SQUARE
+      {
+        uint32_t stepSize = currentStepSize;
+        static uint32_t phaseAcc = 0;
+        phaseAcc += stepSize;
+        int32_t Vout;
+        if (phaseAcc <= UINT32_MAX / 2)
+        {
+          Vout = 128;
+        }
+        else
+        {
+          Vout = 0;
+        }
+        Vout = Vout >> (8 - volume);
+        analogWrite(OUTR_PIN, Vout);
+      }
+      break;
+    case 2:
+      // TRIANGLE
+      {
+        uint32_t stepSize = currentStepSize;
+        static uint32_t phaseAcc = 0;
+        phaseAcc += stepSize;
+        int32_t Vout = 0;
+        if (phaseAcc < 0x80000000)
+        {
+          Vout = (phaseAcc >> 23) - 256;
+        }
+        else
+        {
+          Vout = (0xFFFFFFFF - phaseAcc) >> 23;
+          Vout = -256 + (Vout & 0xFF);
+        }
+        Vout = Vout >> (8 - volume);
+        analogWrite(OUTR_PIN, Vout + 128);
+      }
+      break;
+    default:
+      // invalid value of "function"
+      break;
   }
-  else
-  {
-    Vout = 0;
-  }
-  Vout = Vout >> (8 - volume);
-  analogWrite(OUTR_PIN, Vout);
-}
-
-// TRIANGLE
-void sampleISR3()
-{
-  uint32_t stepSize = currentStepSize;
-  static uint32_t phaseAcc = 0;
-  phaseAcc += stepSize;
-  int32_t Vout = 0;
-  if (phaseAcc < 0x80000000)
-  {
-    Vout = (phaseAcc >> 23) - 256;
-  }
-  else
-  {
-    Vout = (0xFFFFFFFF - phaseAcc) >> 23;
-    Vout = -256 + (Vout & 0xFF);
-  }
-  Vout = Vout >> (8 - volume);
-  analogWrite(OUTR_PIN, Vout + 128);
 }
 
 class Knob
@@ -173,18 +265,21 @@ public:
 
   void update(int keyVal)
   {
+    // Increment Value State
     if ((keyVal == 0b10 && m_prevAB == 0b11) ||
         (keyVal == 0b01 && m_prevAB == 0b00))
     {
       increment();
       m_prevTransition = 1;
     }
+    // Decrement Value State
     else if ((keyVal == 0b11 && m_prevAB == 0b10) ||
              (keyVal == 0b00 && m_prevAB == 0b01))
     {
       decrement();
       m_prevTransition = -1;
     }
+    // Best-Guess States
     else if (keyVal == 0b00 && m_prevAB == 0b11)
     {
       if (m_prevTransition == 1)
@@ -218,14 +313,17 @@ void scanKeysTask(void *pvParameters)
   uint8_t currVol = 0;
   int prevTransition = 0;
 
+  // Knob Constructors
   Knob volumeKnob(0, 8, &volume);
+  Knob functionKnob(0, 2, &function);
+  Knob octaveKnob(2, 8, &octaveSelect);
 
   while (1)
   {
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
     key = -1;
     // Loop over rows 0 to 2 to detect key presses
-    for (uint8_t row = 0; row < 4; row++)
+    for (uint8_t row = 0; row < 5; row++)
     {
       setRow(row);
       delayMicroseconds(3);
@@ -252,8 +350,11 @@ void scanKeysTask(void *pvParameters)
           key = (4 * row) + 3;
         }
       }
-      // Check VOLUME knob3
-      volumeKnob.update(keyArray[3] & 0x03);
+
+      // Update Knobs
+      volumeKnob.update(keyArray[4] >> 2);    // KNOB 0       ( 0 )    ( 1 )    ( 2 )    ( 3 )
+      functionKnob.update(keyArray[4] & 0x03);// KNOB 1      [4]>>2  [4]&0x03  [3]>>2  [3]&0x03
+      octaveKnob.update(keyArray[3] & 0x03);  // KNOB 3       Row4     Row4     Row3     Row3
 
       xSemaphoreGive(keyArrayMutex);
     }
@@ -265,7 +366,7 @@ void scanKeysTask(void *pvParameters)
     // Assign stepSize value to play sound
     else
     {
-      stepSize = stepSizes[key];
+      stepSize = stepSizes[key+12*(octaveSelect-2)];
     }
     __atomic_store_n(&currentStepSize, stepSize, __ATOMIC_RELAXED);
   }
@@ -281,11 +382,33 @@ void displayKeysTask(void *pvParameters)
 
     u8g2.clearBuffer();
     u8g2.setFont(u8g2_font_profont10_tf);
+
     u8g2.setCursor(90, 10);
     u8g2.print("Vol:");
     u8g2.print(volume);
-    u8g2.setCursor(2, 10);
 
+    u8g2.setCursor(90, 30);
+    u8g2.print("Oct:");
+    u8g2.print(octaveSelect);
+
+    u8g2.setCursor(2, 30);
+    u8g2.print("WAVE:");
+    switch (function)
+    {
+      case 0:
+        u8g2.print("Saw");
+        break;
+      case 1:
+        u8g2.print("Square");
+        break;
+      case 2:
+        u8g2.print("Triangle");
+        break;
+      default:
+        u8g2.print("Unknown sound");
+        break;
+    }
+    u8g2.setCursor(2, 10);
     // Do not display key
     if (key == -1)
     {
