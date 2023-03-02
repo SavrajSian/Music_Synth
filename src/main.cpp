@@ -155,6 +155,60 @@ void sampleISR3()
   analogWrite(OUTR_PIN, Vout + 128);
 }
 
+class Knob
+{
+public:
+  Knob(int minValue, int maxValue, volatile int *target)
+      : m_minValue(minValue), m_maxValue(maxValue), m_target(target) {}
+
+  void increment()
+  {
+    __atomic_store_n(m_target, min(__atomic_load_n(m_target, __ATOMIC_RELAXED) + 1, m_maxValue), __ATOMIC_RELAXED);
+  }
+
+  void decrement()
+  {
+    __atomic_store_n(m_target, max(__atomic_load_n(m_target, __ATOMIC_RELAXED) - 1, m_minValue), __ATOMIC_RELAXED);
+  }
+
+  void update(int keyVal)
+  {
+    if ((keyVal == 0b10 && m_prevAB == 0b11) ||
+        (keyVal == 0b01 && m_prevAB == 0b00))
+    {
+      increment();
+      m_prevTransition = 1;
+    }
+    else if ((keyVal == 0b11 && m_prevAB == 0b10) ||
+             (keyVal == 0b00 && m_prevAB == 0b01))
+    {
+      decrement();
+      m_prevTransition = -1;
+    }
+    else if (keyVal == 0b00 && m_prevAB == 0b11)
+    {
+      if (m_prevTransition == 1)
+      {
+        increment();
+        m_prevTransition = 1;
+      }
+      else if (m_prevTransition == -1)
+      {
+        decrement();
+        m_prevTransition = -1;
+      }
+    }
+    m_prevAB = keyVal;
+  }
+
+private:
+  int m_minValue;
+  int m_maxValue;
+  volatile int *m_target;
+  int m_prevAB = 0;
+  int m_prevTransition = 0;
+};
+
 void scanKeysTask(void *pvParameters)
 {
   const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
@@ -163,6 +217,8 @@ void scanKeysTask(void *pvParameters)
   uint8_t prevAB = 0;
   uint8_t currVol = 0;
   int prevTransition = 0;
+
+  Knob volumeKnob(0, 8, &volume);
 
   while (1)
   {
@@ -197,34 +253,9 @@ void scanKeysTask(void *pvParameters)
         }
       }
       // Check VOLUME knob3
-      currVol = keyArray[3] & 0x03;
-      if ((currVol == 0b10 && prevAB == 0b11) ||
-          (currVol == 0b01 && prevAB == 0b00))
-      {
-        __atomic_store_n(&volume, min(__atomic_load_n(&volume, __ATOMIC_RELAXED) + 1, 8), __ATOMIC_RELAXED);
-        prevTransition = 1;
-      }
-      else if ((currVol == 0b11 && prevAB == 0b10) ||
-               (currVol == 0b00 && prevAB == 0b01))
-      {
-        __atomic_store_n(&volume, max(__atomic_load_n(&volume, __ATOMIC_RELAXED) - 1, 0), __ATOMIC_RELAXED);
-        prevTransition = -1;
-      }
-      else if (currVol == 0b00 && prevAB == 0b11)
-      {
-        if (prevTransition == 1)
-        {
-          __atomic_store_n(&volume, min(__atomic_load_n(&volume, __ATOMIC_RELAXED) + 1, 8), __ATOMIC_RELAXED);
-          prevTransition = 1;
-        }
-        else if (prevTransition == -1)
-        {
-          __atomic_store_n(&volume, max(__atomic_load_n(&volume, __ATOMIC_RELAXED) - 1, 0), __ATOMIC_RELAXED);
-          prevTransition = -1;
-        }
-      }
+      volumeKnob.update(keyArray[3] & 0x03);
+
       xSemaphoreGive(keyArrayMutex);
-      prevAB = currVol;
     }
     // If no key pressed disable sound
     if (key == -1)
