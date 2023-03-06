@@ -2,11 +2,14 @@
 #include <U8g2lib.h>
 #include <HardwareTimer.h>
 #include <STM32FreeRTOS.h>
+#include <utility>
+#include <vector>
 
 // Calculate step sizes and frequencies during compilation
 constexpr uint32_t samplingFreq = 22050;                  // Hz
 constexpr double twelfthRootOfTwo = pow(2.0, 1.0 / 12.0); // 12th root of 2
-
+volatile int32_t maxs = 1;
+volatile int32_t mins = 1;
 // Returns frequency for given note
 constexpr uint32_t calculateFreq(float semiTone)
 {
@@ -106,19 +109,31 @@ constexpr uint32_t stepSizes[] = {
 };
 
 // Audio definitions
+struct Node {
+  uint32_t data = 0;
+  Node* next = nullptr;
+};
+
+struct LinkedList{
+  Node* head = nullptr;
+  Node* tail = nullptr;
+};
+
 const uint32_t interval = 100; // Display update interval
-volatile uint32_t currentStepSize1;
-volatile uint32_t currentStepSize2;
+volatile LinkedList currentStepSizes;
+
 const char *notes[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+const char *keys[12] = {};
+const char *waves[4] = {"Saw", "Square", "Triangle", "Sine"};
+
+volatile int32_t sample = 0;
 
 // Key Matrix
-volatile int key1 = -1;
-volatile int key2 = -1;
-volatile uint8_t keyArray[7];
+volatile uint8_t keyArray[4];
 SemaphoreHandle_t keyArrayMutex;
 
 // Knob Variables
-volatile int volume = 4;
+volatile int volume = 6;
 volatile int function = 0;
 volatile int octaveSelect = 4;
 
@@ -190,101 +205,107 @@ void setRow(uint8_t rowIdx)
   digitalWrite(REN_PIN, HIGH);
 }
 
+// Prints the contents of a linked list
+void printList(volatile LinkedList* list) {
+    Node* current = list->head;
+    while (current != nullptr) {
+        Serial.print(current->data);
+        Serial.print(" | ");
+        current = current->next;
+    }
+    Serial.println();
+}
+
 void sampleISR()
 {
+  static int phase_accs[84] = {};
   switch(function) {
     case 0:
       // SAW
       {
-        uint32_t stepSize1 = currentStepSize1;
-        uint32_t stepSize2 = currentStepSize2;
-        static uint32_t phaseAcc1 = 0;
-        static uint32_t phaseAcc2 = 0;
-
-        phaseAcc1 += stepSize1;
-        phaseAcc2 += stepSize2;
-        int32_t Vout1 = (phaseAcc1 >> 24) - 128;
-        Vout1 = Vout1 >> (8 - volume);
-        int32_t Vout2 = (phaseAcc2 >> 24) - 128;
-        Vout2 = Vout2 >> (8 - volume);
-        analogWrite(OUTR_PIN, Vout1 + Vout2 + 128);
-
+        int32_t Vout = 0;
+        sample = 0;
+        Node* current = currentStepSizes.head;
+        int i = 0;
+        while (current != nullptr){
+          uint32_t stepSize = current->data;
+          phase_accs[i] += stepSize;
+          Vout = (phase_accs[i] >> 24) - 128;
+          sample += Vout;
+          current = current->next;
+          i += 1;
+        }
+        sample = sample >> (8 - volume);
+        analogWrite(OUTR_PIN, sample/i + 128);
       }
       break;
     case 1:
       // SQUARE
       {
-        uint32_t stepSize = currentStepSize1;
-        static uint32_t phaseAcc = 0;
-        phaseAcc += stepSize;
-        int32_t Vout;
-        if (phaseAcc <= UINT32_MAX / 2)
-        {
-          Vout = 128;
+        int32_t Vout = 0;
+        sample = 0;
+        Node* current = currentStepSizes.head;
+        int i = 0;
+
+        while (current != nullptr){
+          uint32_t stepSize = current->data;
+          phase_accs[i] += stepSize;
+          if (phase_accs[i] < UINT32_MAX / 2) {
+            Vout = 63;
+          }
+          else{
+            Vout = -64;
+          }
+        sample += Vout;
+        current = current->next;
+        i += 1;
         }
-        else
-        {
-          Vout = 0;
-        }
-        Vout = Vout >> (8 - volume);
-        analogWrite(OUTR_PIN, Vout);
+        sample = sample * volume / 8;
+        analogWrite(OUTR_PIN, sample/i + 64);
       }
       break;
     case 2:
       // TRIANGLE
       {
-        uint32_t stepSize1 = currentStepSize1;
-        uint32_t stepSize2 = currentStepSize2;
-        static uint32_t phaseAcc1 = 0;
-        static uint32_t phaseAcc2 = 0;
-    
-        phaseAcc1 += stepSize1;
-        phaseAcc2 += stepSize2;
+      int32_t Vout = 0;
+      sample = 0;
+      Node* current = currentStepSizes.head;
+      int i = 0;
 
-        int32_t Vout1 = 0;
-        if (phaseAcc1 < UINT32_MAX / 2)
-        {
-          Vout1 = (phaseAcc1 >> 23) - 128;
+      while (current != nullptr){
+        uint32_t stepSize = current->data;
+        phase_accs[i] += stepSize;
+        if (phase_accs[i] < UINT32_MAX / 2) {
+          Vout = (phase_accs[i] >> 24);
         }
-        else
-        {
-          Vout1 = (UINT32_MAX - phaseAcc1) >> 23;
-          Vout1 = -128 + (Vout1 & 0xFF);
+        else{
+          Vout = (-phase_accs[i] >> 24);
         }
-        
-        int32_t Vout2 = 0;
-        if (phaseAcc2 < UINT32_MAX / 2)
-        {
-          Vout2 = (phaseAcc2 >> 23) - 128;
-        }
-        else
-        {
-          Vout2 = (UINT32_MAX - phaseAcc2) >> 23;
-          Vout2 = -128 + (Vout2 & 0xFF);
-        }
-
-        Vout1 = (Vout1 * volume) / 8;
-        Vout2 = (Vout2 * volume) / 8;
-        analogWrite(OUTR_PIN, Vout1 + Vout2 + 128);
+      sample += Vout;
+      current = current->next;
+      i += 1;
       }
+      sample = sample * volume / 8;
+      analogWrite(OUTR_PIN, sample/i + 128);
+    }
       break;
     case 3:
       // SINE
       {
-        uint32_t stepSize = currentStepSize1;
-        static uint32_t phaseAcc = 0;
-        phaseAcc += stepSize;
-        int32_t Vout;
-        if (phaseAcc < UINT32_MAX / 2)
-        {
-          float sinValue = sin(phaseAcc * 2.0 * PI / UINT32_MAX);
-          Vout = 128 + 1 * sinValue;
-          Vout = Vout >> (8 - volume);
-        }
-        else {
-          Vout = 0;
-        }
-        analogWrite(OUTR_PIN, Vout);
+      int32_t Vout = 0;
+      sample = 0;
+      Node* current = currentStepSizes.head;
+      int i = 0;
+      while (current != nullptr) {
+        uint32_t stepSize = current->data;
+        phase_accs[i] += stepSize;
+        float radians = (float) phase_accs[i] / (float) UINT32_MAX * 2.0 * PI;
+        sample += (int32_t) (sin(radians) * 128);
+        current = current->next;
+        i += 1;
+      }
+      sample = sample * volume / 8;
+      analogWrite(OUTR_PIN, sample/i + 128);
       }
       break;
     default:
@@ -350,110 +371,72 @@ private:
   int m_prevTransition = 0;
 };
 
+void addNode(LinkedList* list, const int data) {
+  struct Node* newNode = new Node;
+  newNode->data = data;
+  newNode->next = nullptr;
+  if (list->head == nullptr){
+    list->head = newNode;
+    list->tail = newNode;
+    return;
+  }
+  list->tail->next = newNode;
+  list->tail = newNode;
+}
+
 void scanKeysTask(void *pvParameters)
 {
   const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
   TickType_t xLastWakeTime = xTaskGetTickCount();
-  uint32_t stepSize1;
-  uint32_t stepSize2;
-  uint8_t prevAB = 0;
-  uint8_t currVol = 0;
-  int prevTransition = 0;
 
   // Knob Constructors
   Knob volumeKnob(0, 8, &volume);
   Knob functionKnob(0, 3, &function);
   Knob octaveKnob(2, 8, &octaveSelect);
 
-  bool key1Pressed = false;
-
   while (1)
   {
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
-    key1 = -1;
-    key2 = -1;
-    key1Pressed = false;
 
-    // Loop over rows 0 to 2 to detect key presses
-    for (uint8_t row = 0; row < 5; row++)
-    {
+    xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
+    LinkedList allKeysPressed;
+    int pressedKeys = 0;
+    memset((void*)keys, 0, sizeof(keys));
+  
+    // Read keys
+    for (size_t row = 0; row < 3; row++) {
       setRow(row);
       delayMicroseconds(3);
-
-      xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
-      keyArray[row] = readCols();
-      // Translate binary key values to key position (1-12)
-      if (row < 3)
-      { 
-        if ((keyArray[row] & 0b0001) == 0b0000)
-        {
-          if (key1Pressed == false){
-            key1 = (4 * row);
-            key1Pressed = true;
-          }
-          else{
-            key2 = (4 * row);
-          }
-        }
-        if ((keyArray[row] & 0b0010) == 0b0000)
-        {
-          if (key1Pressed == false){
-            key1 = (4 * row) + 1;
-            key1Pressed = true;
-          }
-          else{
-            key2 = (4 * row) + 1;
-          }
-        }
-        if ((keyArray[row] & 0b0100) == 0b0000)
-        {
-          if (key1Pressed == false){
-            key1 = (4 * row) + 2;
-            key1Pressed = true;
-          }
-          else{
-            key2 = (4 * row) + 2;
-          }
-        }
-        if ((keyArray[row] & 0b1000) == 0b0000)
-        {
-          if (key1Pressed == false){
-            key1 = (4 * row) + 3;
-            key1Pressed = true;
-          }
-          else{
-            key2 = (4 * row) + 3;
-          }
-        }
-      }
-
-      // Serial.print(key1);
-      // Serial.print(":");
-      // Serial.println(key2);
-
-      // Update Knobs
-      volumeKnob.update(keyArray[4] >> 2);    // KNOB 0       ( 0 )    ( 1 )    ( 2 )    ( 3 )
-      functionKnob.update(keyArray[4] & 0x03);// KNOB 1      [4]>>2  [4]&0x03  [3]>>2  [3]&0x03
-      octaveKnob.update(keyArray[3] & 0x03);  // KNOB 3       Row4     Row4     Row3     Row3
-
-      xSemaphoreGive(keyArrayMutex);
+      pressedKeys |= readCols() << (4*row);
     }
-    // If no key pressed disable sound
-    stepSize1, stepSize2 = 0;
-    if (key1 != -1){
-      stepSize1 = stepSizes[key1+12*(octaveSelect-2)];
-      if (key2 != -1){
-        stepSize2 = stepSizes[key2+12*(octaveSelect-2)];
-      }
-      else {
-        stepSize2 = 0;
+    pressedKeys = ~pressedKeys & 0x0FFF;
+
+    // Add key step sizes to linked list  (polyphony)
+    for (int i = 0; i < 12; i++) {
+      if (pressedKeys & (1 << i)) { 
+        addNode(&allKeysPressed, stepSizes[12*(octaveSelect-2)+i]);
+        keys[i] = notes[i];  
       }
     }
-    else {
-      stepSize1 = 0;
+
+    // Read knobs
+    for (size_t row = 3; row < 5; row++) {
+      setRow(row);
+      delayMicroseconds(3);
+      keyArray[row-3] = readCols();
     }
-    __atomic_store_n(&currentStepSize1, stepSize1, __ATOMIC_RELAXED);
-    __atomic_store_n(&currentStepSize2, stepSize2, __ATOMIC_RELAXED);
+
+    xSemaphoreGive(keyArrayMutex);
+
+    // Update Knobs
+    volumeKnob.update(keyArray[1] >> 2);    // KNOB 0       ( 0 )    ( 1 )    ( 2 )    ( 3 )
+    functionKnob.update(keyArray[1] & 0x03);// KNOB 1      [4]>>2  [4]&0x03  [3]>>2  [3]&0x03
+    octaveKnob.update(keyArray[0] & 0x03);  // KNOB 3       Row4     Row4     Row3     Row3
+
+    // Send keys to sampler
+    __atomic_store_n(&currentStepSizes.head, allKeysPressed.head, __ATOMIC_RELAXED);
+    __atomic_store_n(&currentStepSizes.tail, allKeysPressed.tail, __ATOMIC_RELAXED);
+    //printList(&allKeysPressed);
   }
 }
 
@@ -478,49 +461,16 @@ void displayKeysTask(void *pvParameters)
 
     u8g2.setCursor(2, 30);
     u8g2.print("WAVE:");
-    switch (function)
-    {
-      case 0:
-        u8g2.print("Saw");
-        break;
-      case 1:
-        u8g2.print("Square");
-        break;
-      case 2:
-        u8g2.print("Triangle");
-        break;
-      case 3:
-        u8g2.print("Sine");
-        break;
-      default:
-        u8g2.print("Unknown sound");
-        break;
-    }
+    u8g2.print(waves[function]);
+
     u8g2.setCursor(2, 10);
-    // Do not display key
-    if (key1 == -1)
-    {
-      u8g2.print("KEY: --");
-      u8g2.setCursor(2, 20);
-      u8g2.sendBuffer();
+    u8g2.print("KEY: ");
+    for (size_t i = 0; i < 12; i++){
+      u8g2.print(keys[i]);
     }
-    // Display key
-    if (key1 != -1 && key2 == -1)
-    {
-      u8g2.print("KEY: ");
-      u8g2.print(notes[key1]);
-      u8g2.sendBuffer();
-    }
-    if (key1 != -1 && key2 != -1)
-    {
-      u8g2.print("KEY: ");
-      u8g2.print(notes[key1]);
-      u8g2.print(" ");
-      u8g2.print(notes[key2]);
-      u8g2.sendBuffer();
-    }
-    digitalToggle(LED_BUILTIN);
+    u8g2.sendBuffer();
   }
+  digitalToggle(LED_BUILTIN);
 }
 
 void setup()
