@@ -8,8 +8,7 @@
 // Calculate step sizes and frequencies during compilation
 constexpr uint32_t samplingFreq = 22050;                  // Hz
 constexpr double twelfthRootOfTwo = pow(2.0, 1.0 / 12.0); // 12th root of 2
-volatile int32_t maxs = 1;
-volatile int32_t mins = 1;
+
 // Returns frequency for given note
 constexpr uint32_t calculateFreq(float semiTone)
 {
@@ -125,17 +124,33 @@ volatile LinkedList currentStepSizes;
 const char *notes[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 const char *keys[12] = {};
 const char *waves[4] = {"Saw", "Square", "Triangle", "Sine"};
+const char *effects[4] = {"Clean", "Vibrato", "None", "None"};
 
 volatile int32_t sample = 0;
+const int TABLE_SIZE = 1028;
+float sinTable[TABLE_SIZE];
 
 // Key Matrix
 volatile uint8_t keyArray[4];
 SemaphoreHandle_t keyArrayMutex;
+volatile int pressedKeys;
 
 // Knob Variables
 volatile int volume = 6;
-volatile int function = 0;
+volatile int waveform = 0;
+volatile int effect = 0;
+
+// Octave Settings
 volatile int octaveSelect = 4;
+const int MIN_OCT = 2;
+const int MAX_OCT = 8;
+volatile bool OctToggle = false;
+
+// Pitch Bend
+volatile float pitchBend = 1;
+float calZero = 0;
+volatile float vibrato = 0;
+volatile bool vibToggle = false;
 
 // Pin definitions
 // Row select and enable
@@ -218,8 +233,8 @@ void printList(volatile LinkedList* list) {
 
 void sampleISR()
 {
-  static int phase_accs[84] = {};
-  switch(function) {
+  static uint32_t phase_accs[84] = {};
+  switch(waveform) {
     case 0:
       // SAW
       {
@@ -290,27 +305,24 @@ void sampleISR()
     }
       break;
     case 3:
-      // SINE
-      {
-      int32_t Vout = 0;
-      sample = 0;
-      Node* current = currentStepSizes.head;
-      int i = 0;
-      while (current != nullptr) {
-        uint32_t stepSize = current->data;
-        phase_accs[i] += stepSize;
-        float radians = (float) phase_accs[i] / (float) UINT32_MAX * 2.0 * PI;
-        sample += (int32_t) (sin(radians) * 128);
-        current = current->next;
-        i += 1;
-      }
-      sample = sample * volume / 8;
-      analogWrite(OUTR_PIN, sample/i + 128);
-      }
-      break;
-    default:
-      // invalid value of "function"
-      break;
+  // SINE
+  {
+    int32_t Vout = 0;
+    sample = 0;
+    Node* current = currentStepSizes.head;
+    int i = 0;
+    while (current != nullptr) {
+      uint32_t stepSize = current->data;
+      phase_accs[i] += stepSize;
+      int index = 1027 * ((float)phase_accs[i]/(float)UINT32_MAX);
+      sample += (int32_t)sinTable[index];
+      current = current->next;
+      i += 1;
+    }
+    sample = sample * volume / 8;
+    analogWrite(OUTR_PIN, sample/i + 128);
+  }
+  break;
   }
 }
 
@@ -389,18 +401,13 @@ void scanKeysTask(void *pvParameters)
   const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
   TickType_t xLastWakeTime = xTaskGetTickCount();
 
-  // Knob Constructors
-  Knob volumeKnob(0, 8, &volume);
-  Knob functionKnob(0, 3, &function);
-  Knob octaveKnob(2, 8, &octaveSelect);
-
   while (1)
   {
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
     LinkedList allKeysPressed;
-    int pressedKeys = 0;
+    pressedKeys = 0;
     memset((void*)keys, 0, sizeof(keys));
   
     // Read keys
@@ -414,7 +421,7 @@ void scanKeysTask(void *pvParameters)
     // Add key step sizes to linked list  (polyphony)
     for (int i = 0; i < 12; i++) {
       if (pressedKeys & (1 << i)) { 
-        addNode(&allKeysPressed, stepSizes[12*(octaveSelect-2)+i]);
+        addNode(&allKeysPressed, (uint32_t)((float)stepSizes[12*(octaveSelect-2)+i] * pitchBend));
         keys[i] = notes[i];  
       }
     }
@@ -428,16 +435,93 @@ void scanKeysTask(void *pvParameters)
 
     xSemaphoreGive(keyArrayMutex);
 
-    // Update Knobs
-    volumeKnob.update(keyArray[1] >> 2);    // KNOB 0       ( 0 )    ( 1 )    ( 2 )    ( 3 )
-    functionKnob.update(keyArray[1] & 0x03);// KNOB 1      [4]>>2  [4]&0x03  [3]>>2  [3]&0x03
-    octaveKnob.update(keyArray[0] & 0x03);  // KNOB 3       Row4     Row4     Row3     Row3
-
     // Send keys to sampler
     __atomic_store_n(&currentStepSizes.head, allKeysPressed.head, __ATOMIC_RELAXED);
     __atomic_store_n(&currentStepSizes.tail, allKeysPressed.tail, __ATOMIC_RELAXED);
     //printList(&allKeysPressed);
   }
+}
+
+void octaveControl(){
+  // Read joystick (octaves)
+    float joyX = analogRead(A1);
+    float joyXscale = (joyX / 1023) * 100;
+
+    if (joyXscale > 80 && OctToggle == false){
+      __atomic_store_n(&octaveSelect, max(__atomic_load_n(&octaveSelect, __ATOMIC_RELAXED) - 1, MIN_OCT), __ATOMIC_RELAXED);
+      OctToggle = true;
+    }
+    else if (joyXscale < 15 && OctToggle == false){
+      __atomic_store_n(&octaveSelect, min(__atomic_load_n(&octaveSelect, __ATOMIC_RELAXED) + 1, MAX_OCT), __ATOMIC_RELAXED);
+      OctToggle = true;
+    }
+    else if (joyXscale >= 15 && joyXscale <= 80){
+      OctToggle = false;
+    }
+}
+
+void pitchControl(){
+  // Read joystick (stepsize)
+  float joyY = analogRead(A0);
+  float joyYscale = (joyY / 1023);
+  pitchBend = 1.00f;
+
+  if (joyYscale < calZero - 0.05) {
+    pitchBend = 1 + (calZero - joyYscale) * 0.5;
+  }
+  else if (joyYscale > calZero + 0.05) {
+    pitchBend = 1 - (joyYscale - calZero) * 0.5;
+  }
+
+  // Vibrato
+  if (effect == 1 && pressedKeys != 0){
+    if (vibrato < 0.8 && vibToggle == false){
+      vibrato += 0.04;
+      pitchBend = 1 + vibrato;
+      if (vibrato >= 0.1){
+        vibToggle = true;
+      }
+      
+    }
+    if (vibToggle == true){
+      vibrato -= 0.02;
+      pitchBend = 1 + vibrato;
+      if (vibrato <= 0) {
+        vibToggle = false;
+      }
+    }
+    // Serial.println(pitchBend);
+  }
+
+}
+
+void readControlsTask(void *pvParameters)
+{
+  const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
+  TickType_t xLastWakeTime = xTaskGetTickCount();
+
+  // Knob Constructors
+  Knob volumeKnob(0, 8, &volume);
+  Knob functionKnob(0, 3, &waveform);
+  Knob effectKnob(0, 3, &effect);
+
+  // Calculate the zero error (stick drift)
+  float initialY = analogRead(A1);
+  calZero = (initialY / 1023);
+
+  while (1)
+  {
+    vTaskDelayUntil(&xLastWakeTime, xFrequency);
+
+    // Update Knobs
+    volumeKnob.update(keyArray[1] >> 2);    // KNOB 0       ( 0 )    ( 1 )    ( 2 )    ( 3 )
+    functionKnob.update(keyArray[1] & 0x03);// KNOB 1      [4]>>2  [4]&0x03  [3]>>2  [3]&0x03
+    effectKnob.update(keyArray[0] >> 2);    // KNOB 3       Row4     Row4     Row3     Row3
+
+    octaveControl(); 
+    pitchControl();
+  }
+
 }
 
 void displayKeysTask(void *pvParameters)
@@ -451,17 +535,21 @@ void displayKeysTask(void *pvParameters)
     u8g2.clearBuffer();
     u8g2.setFont(u8g2_font_profont10_tf);
 
-    u8g2.setCursor(90, 10);
+    u8g2.setCursor(100, 10);
     u8g2.print("Vol:");
     u8g2.print(volume);
 
-    u8g2.setCursor(90, 30);
+    u8g2.setCursor(100, 20);
     u8g2.print("Oct:");
     u8g2.print(octaveSelect);
 
-    u8g2.setCursor(2, 30);
+    u8g2.setCursor(2, 20);
     u8g2.print("WAVE:");
-    u8g2.print(waves[function]);
+    u8g2.print(waves[waveform]);
+
+    u8g2.setCursor(2, 30);
+    u8g2.print("FX:");
+    u8g2.print(effects[effect]);
 
     u8g2.setCursor(2, 10);
     u8g2.print("KEY: ");
@@ -469,8 +557,9 @@ void displayKeysTask(void *pvParameters)
       u8g2.print(keys[i]);
     }
     u8g2.sendBuffer();
+    digitalToggle(LED_BUILTIN);
   }
-  digitalToggle(LED_BUILTIN);
+ 
 }
 
 void setup()
@@ -499,6 +588,11 @@ void setup()
   u8g2.begin();
   setOutMuxBit(DEN_BIT, HIGH); // Enable display power supply
 
+  // Initalise SINE
+  for (int i = 0; i < TABLE_SIZE; i++) {
+    sinTable[i] = 127 * sin((float) i / (float) TABLE_SIZE * 2.0 * PI);
+  }
+
   // Initialise UART
   Serial.begin(9600);
 
@@ -517,6 +611,8 @@ void setup()
   xTaskCreate(scanKeysTask, "scanKeys", 64, NULL, 2, &scanKeysHandle);
   TaskHandle_t displayKeysHandle = NULL;
   xTaskCreate(displayKeysTask, "displayKeys", 256, NULL, 1, &displayKeysHandle);
+  TaskHandle_t readControlsHandle = NULL;
+  xTaskCreate(readControlsTask, "readControls", 256, NULL, 1, &readControlsHandle);
   vTaskStartScheduler();
 }
 
