@@ -22,137 +22,143 @@ constexpr uint32_t calculateStepSize(float frequency)
 }
 // 2 - 8 Octaves of step sizes - super long
 constexpr uint32_t stepSizes[] = {
-  calculateStepSize(calculateFreq(-33)),// C2
-  calculateStepSize(calculateFreq(-32)),// C#2
-  calculateStepSize(calculateFreq(-31)),// D2
-  calculateStepSize(calculateFreq(-30)),// D#2
-  calculateStepSize(calculateFreq(-29)),// E2
-  calculateStepSize(calculateFreq(-28)),// F2
-  calculateStepSize(calculateFreq(-27)),// F#2
-  calculateStepSize(calculateFreq(-26)),// G2
-  calculateStepSize(calculateFreq(-25)),// G#2
-  calculateStepSize(calculateFreq(-24)),// A2
-  calculateStepSize(calculateFreq(-23)),// A#2
-  calculateStepSize(calculateFreq(-22)),// B2
-  calculateStepSize(calculateFreq(-21)),// C3
-  calculateStepSize(calculateFreq(-20)),// C#3
-  calculateStepSize(calculateFreq(-19)),// D3
-  calculateStepSize(calculateFreq(-18)),// D#3
-  calculateStepSize(calculateFreq(-17)),// E3
-  calculateStepSize(calculateFreq(-16)),// F3
-  calculateStepSize(calculateFreq(-15)),// F#3
-  calculateStepSize(calculateFreq(-14)),// G3
-  calculateStepSize(calculateFreq(-13)),// G#3
-  calculateStepSize(calculateFreq(-12)),// A3
-  calculateStepSize(calculateFreq(-11)),// A#3
-  calculateStepSize(calculateFreq(-10)),// B3
-  calculateStepSize(calculateFreq(-9)), // C4
-  calculateStepSize(calculateFreq(-8)), // C#4
-  calculateStepSize(calculateFreq(-7)), // D4
-  calculateStepSize(calculateFreq(-6)), // D#4
-  calculateStepSize(calculateFreq(-5)), // E4
-  calculateStepSize(calculateFreq(-4)), // F4
-  calculateStepSize(calculateFreq(-3)), // F#4
-  calculateStepSize(calculateFreq(-2)), // G4
-  calculateStepSize(calculateFreq(-1)), // G#4
-  calculateStepSize(calculateFreq(0)), // A4
-  calculateStepSize(calculateFreq(1)), // A#4
-  calculateStepSize(calculateFreq(2)), // B4
-  calculateStepSize(calculateFreq(3)), // C5
-  calculateStepSize(calculateFreq(4)), // C#5
-  calculateStepSize(calculateFreq(5)), // D5
-  calculateStepSize(calculateFreq(6)), // D#5
-  calculateStepSize(calculateFreq(7)), // E5
-  calculateStepSize(calculateFreq(8)), // F5
-  calculateStepSize(calculateFreq(9)), // F#5
-  calculateStepSize(calculateFreq(10)), // G5
-  calculateStepSize(calculateFreq(11)), // G#5
-  calculateStepSize(calculateFreq(12)), // A5
-  calculateStepSize(calculateFreq(13)), // A#5
-  calculateStepSize(calculateFreq(14)), // B5
-  calculateStepSize(calculateFreq(15)), // C6
-  calculateStepSize(calculateFreq(16)), // C#6
-  calculateStepSize(calculateFreq(17)), // D6
-  calculateStepSize(calculateFreq(18)), // D#6
-  calculateStepSize(calculateFreq(19)), // E6
-  calculateStepSize(calculateFreq(20)), // F6
-  calculateStepSize(calculateFreq(21)), // F#6
-  calculateStepSize(calculateFreq(22)), // G6
-  calculateStepSize(calculateFreq(23)), // G#6
-  calculateStepSize(calculateFreq(24)), // A6
-  calculateStepSize(calculateFreq(25)), // A#6
-  calculateStepSize(calculateFreq(26)), // B6
-  calculateStepSize(calculateFreq(27)), // C7
-  calculateStepSize(calculateFreq(28)), // C#7
-  calculateStepSize(calculateFreq(29)), // D7
-  calculateStepSize(calculateFreq(30)), // D#7
-  calculateStepSize(calculateFreq(31)), // E7
-  calculateStepSize(calculateFreq(32)), // F7
-  calculateStepSize(calculateFreq(33)), // F#7
-  calculateStepSize(calculateFreq(34)), // G7
-  calculateStepSize(calculateFreq(35)), // G#7
-  calculateStepSize(calculateFreq(36)), // A7
-  calculateStepSize(calculateFreq(37)), // A#7
-  calculateStepSize(calculateFreq(38)), // B7
-  calculateStepSize(calculateFreq(39)), // C8
-  calculateStepSize(calculateFreq(40)), // C#8
-  calculateStepSize(calculateFreq(41)), // D8
-  calculateStepSize(calculateFreq(42)), // D#8
-  calculateStepSize(calculateFreq(43)), // E8
-  calculateStepSize(calculateFreq(44)), // F8
-  calculateStepSize(calculateFreq(45)), // F#8
-  calculateStepSize(calculateFreq(46)), // G8
-  calculateStepSize(calculateFreq(47)), // G#8
-  calculateStepSize(calculateFreq(48)), // A8
-  calculateStepSize(calculateFreq(49)), // A#8
-  calculateStepSize(calculateFreq(50))  // B8
+    calculateStepSize(calculateFreq(-33)), // C2
+    calculateStepSize(calculateFreq(-32)), // C#2
+    calculateStepSize(calculateFreq(-31)), // D2
+    calculateStepSize(calculateFreq(-30)), // D#2
+    calculateStepSize(calculateFreq(-29)), // E2
+    calculateStepSize(calculateFreq(-28)), // F2
+    calculateStepSize(calculateFreq(-27)), // F#2
+    calculateStepSize(calculateFreq(-26)), // G2
+    calculateStepSize(calculateFreq(-25)), // G#2
+    calculateStepSize(calculateFreq(-24)), // A2
+    calculateStepSize(calculateFreq(-23)), // A#2
+    calculateStepSize(calculateFreq(-22)), // B2
+    calculateStepSize(calculateFreq(-21)), // C3
+    calculateStepSize(calculateFreq(-20)), // C#3
+    calculateStepSize(calculateFreq(-19)), // D3
+    calculateStepSize(calculateFreq(-18)), // D#3
+    calculateStepSize(calculateFreq(-17)), // E3
+    calculateStepSize(calculateFreq(-16)), // F3
+    calculateStepSize(calculateFreq(-15)), // F#3
+    calculateStepSize(calculateFreq(-14)), // G3
+    calculateStepSize(calculateFreq(-13)), // G#3
+    calculateStepSize(calculateFreq(-12)), // A3
+    calculateStepSize(calculateFreq(-11)), // A#3
+    calculateStepSize(calculateFreq(-10)), // B3
+    calculateStepSize(calculateFreq(-9)),  // C4
+    calculateStepSize(calculateFreq(-8)),  // C#4
+    calculateStepSize(calculateFreq(-7)),  // D4
+    calculateStepSize(calculateFreq(-6)),  // D#4
+    calculateStepSize(calculateFreq(-5)),  // E4
+    calculateStepSize(calculateFreq(-4)),  // F4
+    calculateStepSize(calculateFreq(-3)),  // F#4
+    calculateStepSize(calculateFreq(-2)),  // G4
+    calculateStepSize(calculateFreq(-1)),  // G#4
+    calculateStepSize(calculateFreq(0)),   // A4
+    calculateStepSize(calculateFreq(1)),   // A#4
+    calculateStepSize(calculateFreq(2)),   // B4
+    calculateStepSize(calculateFreq(3)),   // C5
+    calculateStepSize(calculateFreq(4)),   // C#5
+    calculateStepSize(calculateFreq(5)),   // D5
+    calculateStepSize(calculateFreq(6)),   // D#5
+    calculateStepSize(calculateFreq(7)),   // E5
+    calculateStepSize(calculateFreq(8)),   // F5
+    calculateStepSize(calculateFreq(9)),   // F#5
+    calculateStepSize(calculateFreq(10)),  // G5
+    calculateStepSize(calculateFreq(11)),  // G#5
+    calculateStepSize(calculateFreq(12)),  // A5
+    calculateStepSize(calculateFreq(13)),  // A#5
+    calculateStepSize(calculateFreq(14)),  // B5
+    calculateStepSize(calculateFreq(15)),  // C6
+    calculateStepSize(calculateFreq(16)),  // C#6
+    calculateStepSize(calculateFreq(17)),  // D6
+    calculateStepSize(calculateFreq(18)),  // D#6
+    calculateStepSize(calculateFreq(19)),  // E6
+    calculateStepSize(calculateFreq(20)),  // F6
+    calculateStepSize(calculateFreq(21)),  // F#6
+    calculateStepSize(calculateFreq(22)),  // G6
+    calculateStepSize(calculateFreq(23)),  // G#6
+    calculateStepSize(calculateFreq(24)),  // A6
+    calculateStepSize(calculateFreq(25)),  // A#6
+    calculateStepSize(calculateFreq(26)),  // B6
+    calculateStepSize(calculateFreq(27)),  // C7
+    calculateStepSize(calculateFreq(28)),  // C#7
+    calculateStepSize(calculateFreq(29)),  // D7
+    calculateStepSize(calculateFreq(30)),  // D#7
+    calculateStepSize(calculateFreq(31)),  // E7
+    calculateStepSize(calculateFreq(32)),  // F7
+    calculateStepSize(calculateFreq(33)),  // F#7
+    calculateStepSize(calculateFreq(34)),  // G7
+    calculateStepSize(calculateFreq(35)),  // G#7
+    calculateStepSize(calculateFreq(36)),  // A7
+    calculateStepSize(calculateFreq(37)),  // A#7
+    calculateStepSize(calculateFreq(38)),  // B7
+    calculateStepSize(calculateFreq(39)),  // C8
+    calculateStepSize(calculateFreq(40)),  // C#8
+    calculateStepSize(calculateFreq(41)),  // D8
+    calculateStepSize(calculateFreq(42)),  // D#8
+    calculateStepSize(calculateFreq(43)),  // E8
+    calculateStepSize(calculateFreq(44)),  // F8
+    calculateStepSize(calculateFreq(45)),  // F#8
+    calculateStepSize(calculateFreq(46)),  // G8
+    calculateStepSize(calculateFreq(47)),  // G#8
+    calculateStepSize(calculateFreq(48)),  // A8
+    calculateStepSize(calculateFreq(49)),  // A#8
+    calculateStepSize(calculateFreq(50))   // B8
 };
 
 // Audio definitions
-struct Node {
+// Linked list struct for step sizes
+struct Node
+{
   uint32_t data = 0;
-  Node* next = nullptr;
+  Node *next = nullptr;
 };
 
-struct LinkedList{
-  Node* head = nullptr;
-  Node* tail = nullptr;
+struct LinkedList
+{
+  Node *head = nullptr;
+  Node *tail = nullptr;
 };
 
 const uint32_t interval = 100; // Display update interval
 volatile LinkedList currentStepSizes;
 
+// Arrays for selecting features
 const char *notes[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 const char *keys[12] = {};
 const char *waves[4] = {"Saw", "Square", "Triangle", "Sine"};
 const char *effects[4] = {"Clean", "Vibrato", "None", "None"};
 
+// Sample to accumulate the phases
 volatile int32_t sample = 0;
+
+// Lookup table
 const int TABLE_SIZE = 1028;
 float sinTable[TABLE_SIZE];
 
 // Key Matrix
 volatile uint8_t keyArray[4];
-SemaphoreHandle_t keyArrayMutex;
 volatile int pressedKeys;
+SemaphoreHandle_t keyArrayMutex;
 
 // Knob Variables
 volatile int volume = 4;
 volatile int waveform = 0;
 volatile int effect = 0;
 
-//CAN Variables
+// CAN Variables
 QueueHandle_t msgInQ;
-QueueHandle_t msgOutQ; //queue for outgoing messages
-uint8_t RX_Message[8]={0};
+QueueHandle_t msgOutQ;
+uint8_t RX_Message[8] = {0};
 SemaphoreHandle_t CAN_TX_Semaphore;
-
 
 // Octave Settings
 volatile int octaveSelect = 4;
+volatile bool OctToggle = false;
 const int MIN_OCT = 2;
 const int MAX_OCT = 8;
-volatile bool OctToggle = false;
 
 // Pitch Bend
 volatile float pitchBend = 1;
@@ -229,110 +235,111 @@ void setRow(uint8_t rowIdx)
 }
 
 // Prints the contents of a linked list
-void printList(volatile LinkedList* list) {
-    Node* current = list->head;
-    while (current != nullptr) {
-        Serial.print(current->data);
-        Serial.print(" | ");
-        current = current->next;
-        
-    }
-  
-    Serial.println();
+void printList(volatile LinkedList *list)
+{
+  Node *current = list->head;
+  while (current != nullptr)
+  {
+    Serial.print(current->data);
+    Serial.print(" | ");
+    current = current->next;
+  }
+
+  Serial.println();
 }
 
 void sampleISR()
 {
   static uint32_t phase_accs[84] = {};
-  switch(waveform) {
-    case 0:
-      // SAW
-      {
-        int32_t Vout = 0;
-        sample = 0;
-        Node* current = currentStepSizes.head;
-        int i = 0;
-        while (current != nullptr){
-          uint32_t stepSize = current->data;
-          phase_accs[i] += stepSize;
-          Vout = (phase_accs[i] >> 24) - 128;
-          sample += Vout;
-          current = current->next;
-          i += 1;
-        }
-        sample = sample >> (8 - volume);
-        analogWrite(OUTR_PIN, sample/i + 128);
-      }
-      break;
-    case 1:
-      // SQUARE
-      {
-        int32_t Vout = 0;
-        sample = 0;
-        Node* current = currentStepSizes.head;
-        int i = 0;
+  int32_t Vout = 0;
+  sample = 0;
+  Node *current = currentStepSizes.head;
+  int i = 0;
 
-        while (current != nullptr){
-          uint32_t stepSize = current->data;
-          phase_accs[i] += stepSize;
-          if (phase_accs[i] < UINT32_MAX / 2) {
-            Vout = 63;
-          }
-          else{
-            Vout = -64;
-          }
+  switch (waveform)
+  {
+  case 0:
+    // SAW
+    {
+      while (current != nullptr)
+      {
+        uint32_t stepSize = current->data;
+        stepSize = (uint32_t)((float)stepSize * pitchBend);
+        phase_accs[i] += stepSize;
+        Vout = (phase_accs[i] >> 24) - 128;
         sample += Vout;
         current = current->next;
         i += 1;
-        }
-        sample = sample * volume / 8;
-        analogWrite(OUTR_PIN, sample/i + 64);
       }
-      break;
-    case 2:
-      // TRIANGLE
+      sample = sample >> (8 - volume);
+      analogWrite(OUTR_PIN, sample / i + 128);
+    }
+    break;
+  case 1:
+    // SQUARE
+    {
+      while (current != nullptr)
       {
-      int32_t Vout = 0;
-      sample = 0;
-      Node* current = currentStepSizes.head;
-      int i = 0;
-
-      while (current != nullptr){
         uint32_t stepSize = current->data;
+        stepSize = (uint32_t)((float)stepSize * pitchBend);
         phase_accs[i] += stepSize;
-        if (phase_accs[i] < UINT32_MAX / 2) {
-          Vout = (phase_accs[i] >> 24);
+        if (phase_accs[i] < UINT32_MAX / 2)
+        {
+          Vout = 63;
         }
-        else{
-          Vout = (-phase_accs[i] >> 24);
+        else
+        {
+          Vout = -64;
         }
-      sample += Vout;
-      current = current->next;
-      i += 1;
+        sample += Vout;
+        current = current->next;
+        i += 1;
       }
       sample = sample * volume / 8;
-      analogWrite(OUTR_PIN, sample/i + 128);
+      analogWrite(OUTR_PIN, sample / i + 64);
     }
-      break;
-    case 3:
-  // SINE
-  {
-    int32_t Vout = 0;
-    sample = 0;
-    Node* current = currentStepSizes.head;
-    int i = 0;
-    while (current != nullptr) {
-      uint32_t stepSize = current->data;
-      phase_accs[i] += stepSize;
-      int index = 1027 * ((float)phase_accs[i]/(float)UINT32_MAX);
-      sample += (int32_t)sinTable[index];
-      current = current->next;
-      i += 1;
+    break;
+  case 2:
+    // TRIANGLE
+    {
+      while (current != nullptr)
+      {
+        uint32_t stepSize = current->data;
+        stepSize = (uint32_t)((float)stepSize * pitchBend);
+        phase_accs[i] += stepSize;
+        if (phase_accs[i] < UINT32_MAX / 2)
+        {
+          Vout = (phase_accs[i] >> 24);
+        }
+        else
+        {
+          Vout = (-phase_accs[i] >> 24);
+        }
+        sample += Vout;
+        current = current->next;
+        i += 1;
+      }
+      sample = sample * volume / 8;
+      analogWrite(OUTR_PIN, sample / i + 128);
     }
-    sample = sample * volume / 8;
-    analogWrite(OUTR_PIN, sample/i + 128);
-  }
-  break;
+    break;
+  case 3:
+    // SINE
+    {
+      while (current != nullptr)
+      {
+        uint32_t stepSize = current->data;
+        stepSize = (uint32_t)((float)stepSize * pitchBend);
+        phase_accs[i] += stepSize;
+        int index = 1027 * ((float)phase_accs[i] / (float)UINT32_MAX);
+        sample += (int32_t)sinTable[index];
+        current = current->next;
+        i += 1;
+      }
+      sample = sample * volume / 8;
+      analogWrite(OUTR_PIN, sample / i + 128);
+    }
+    break;
   }
 }
 
@@ -393,11 +400,13 @@ private:
   int m_prevTransition = 0;
 };
 
-void addNode(LinkedList* list, const int data) {
-  struct Node* newNode = new Node;
+void addNode(LinkedList *list, const int data)
+{
+  struct Node *newNode = new Node;
   newNode->data = data;
   newNode->next = nullptr;
-  if (list->head == nullptr){
+  if (list->head == nullptr)
+  {
     list->head = newNode;
     list->tail = newNode;
     return;
@@ -416,114 +425,125 @@ void scanKeysTask(void *pvParameters)
 
   while (1)
   {
-
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
     LinkedList allKeysPressed;
     pressedKeys = 0;
-    memset((void*)keys, 0, sizeof(keys));
+    memset((void *)keys, 0, sizeof(keys));
     uint8_t sendpress[12] = {0};
     uint8_t sendrelease[12] = {0};
-  
+
     // Read keys
-    for (size_t row = 0; row < 3; row++) {
+    for (size_t row = 0; row < 3; row++)
+    {
       setRow(row);
       delayMicroseconds(3);
-      pressedKeys |= readCols() << (4*row);
+      pressedKeys |= readCols() << (4 * row);
     }
     pressedKeys = ~pressedKeys & 0x0FFF;
 
-
     // Read knobs
-    for (size_t row = 3; row < 5; row++) {
+    for (size_t row = 3; row < 5; row++)
+    {
       setRow(row);
       delayMicroseconds(3);
-      keyArray[row-3] = readCols();
+      keyArray[row - 3] = readCols();
     }
     xSemaphoreGive(keyArrayMutex);
 
-
-    for (int i = 0; i < 12; i++) {
-      if (pressedKeys & (1 << i)) { 
-        if(!(prevkeys & (1<<i))){
+    for (int i = 0; i < 12; i++)
+    {
+      if (pressedKeys & (1 << i))
+      {
+        keys[i] = notes[i];
+        if (!(prevkeys & (1 << i)))
+        {
           sendpress[i] = 1;
           TX_Message[0] = 0x50;
           TX_Message[1] = octaveSelect;
           TX_Message[2] = i;
-          xQueueSend( msgOutQ, TX_Message, portMAX_DELAY);
+          xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
         }
       }
 
-      else if(!(pressedKeys & (1 << i))){ //if pressedkeys bit = 0
-        if(prevkeys & (1<<i)){ //if prev bit = 1
+      else if (!(pressedKeys & (1 << i)))
+      { // if pressedkeys bit = 0
+        if (prevkeys & (1 << i))
+        { // if prev bit = 1
           sendrelease[i] = 1;
           TX_Message[0] = 0x52;
           TX_Message[1] = octaveSelect;
           TX_Message[2] = i;
-          xQueueSend( msgOutQ, TX_Message, portMAX_DELAY);
+          xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
         }
       }
-    
     }
 
     prevkeys = pressedKeys;
-
-
-
   }
 }
 
-void octaveControl(){
+void octaveControl()
+{
   // Read joystick (octaves)
-    float joyX = analogRead(A1);
-    float joyXscale = (joyX / 1023) * 100;
+  float joyX = analogRead(A1);
+  float joyXscale = (joyX / 1023) * 100;
 
-    if (joyXscale > 80 && OctToggle == false){
-      __atomic_store_n(&octaveSelect, max(__atomic_load_n(&octaveSelect, __ATOMIC_RELAXED) - 1, MIN_OCT), __ATOMIC_RELAXED);
-      OctToggle = true;
-    }
-    else if (joyXscale < 15 && OctToggle == false){
-      __atomic_store_n(&octaveSelect, min(__atomic_load_n(&octaveSelect, __ATOMIC_RELAXED) + 1, MAX_OCT), __ATOMIC_RELAXED);
-      OctToggle = true;
-    }
-    else if (joyXscale >= 15 && joyXscale <= 80){
-      OctToggle = false;
-    }
+  if (joyXscale > 80 && OctToggle == false)
+  {
+    __atomic_store_n(&octaveSelect, max(__atomic_load_n(&octaveSelect, __ATOMIC_RELAXED) - 1, MIN_OCT), __ATOMIC_RELAXED);
+    OctToggle = true;
+  }
+  else if (joyXscale < 15 && OctToggle == false)
+  {
+    __atomic_store_n(&octaveSelect, min(__atomic_load_n(&octaveSelect, __ATOMIC_RELAXED) + 1, MAX_OCT), __ATOMIC_RELAXED);
+    OctToggle = true;
+  }
+  else if (joyXscale >= 15 && joyXscale <= 80)
+  {
+    OctToggle = false;
+  }
 }
 
-void pitchControl(){
+void pitchControl()
+{
   // Read joystick (stepsize)
   float joyY = analogRead(A0);
   float joyYscale = (joyY / 1023);
   pitchBend = 1.00f;
 
-  if (joyYscale < calZero - 0.05) {
+  if (joyYscale < calZero - 0.05)
+  {
     pitchBend = 1 + (calZero - joyYscale) * 0.5;
   }
-  else if (joyYscale > calZero + 0.05) {
+  else if (joyYscale > calZero + 0.05)
+  {
     pitchBend = 1 - (joyYscale - calZero) * 0.5;
   }
 
   // Vibrato
-  if (effect == 1 && pressedKeys != 0){
-    if (vibrato < 0.8 && vibToggle == false){
+  if (effect == 1 && pressedKeys != 0)
+  {
+    if (vibrato < 0.8 && vibToggle == false)
+    {
       vibrato += 0.04;
       pitchBend = 1 + vibrato;
-      if (vibrato >= 0.1){
+      if (vibrato >= 0.1)
+      {
         vibToggle = true;
       }
-      
     }
-    if (vibToggle == true){
+    if (vibToggle == true)
+    {
       vibrato -= 0.02;
       pitchBend = 1 + vibrato;
-      if (vibrato <= 0) {
+      if (vibrato <= 0)
+      {
         vibToggle = false;
       }
     }
-    // Serial.println(pitchBend);
+    Serial.println(pitchBend);
   }
-
 }
 
 void readControlsTask(void *pvParameters)
@@ -545,14 +565,13 @@ void readControlsTask(void *pvParameters)
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
     // Update Knobs
-    volumeKnob.update(keyArray[1] >> 2);    // KNOB 0       ( 0 )    ( 1 )    ( 2 )    ( 3 )
-    functionKnob.update(keyArray[1] & 0x03);// KNOB 1      [4]>>2  [4]&0x03  [3]>>2  [3]&0x03
-    effectKnob.update(keyArray[0] >> 2);    // KNOB 3       Row4     Row4     Row3     Row3
+    volumeKnob.update(keyArray[1] >> 2);     // KNOB 0       ( 0 )    ( 1 )    ( 2 )    ( 3 )
+    functionKnob.update(keyArray[1] & 0x03); // KNOB 1      [4]>>2  [4]&0x03  [3]>>2  [3]&0x03
+    effectKnob.update(keyArray[0] >> 2);     // KNOB 3       Row4     Row4     Row3     Row3
 
-    octaveControl(); 
+    octaveControl();
     pitchControl();
   }
-
 }
 
 void displayKeysTask(void *pvParameters)
@@ -563,7 +582,7 @@ void displayKeysTask(void *pvParameters)
   while (1)
   {
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
-    //Serial.println("Displaying keys");
+    // Serial.println("Displaying keys");
 
     u8g2.clearBuffer();
     u8g2.setFont(u8g2_font_profont10_tf);
@@ -586,98 +605,109 @@ void displayKeysTask(void *pvParameters)
 
     u8g2.setCursor(2, 10);
     u8g2.print("KEY: ");
-    for (size_t i = 0; i < 12; i++){
+    for (size_t i = 0; i < 12; i++)
+    {
       u8g2.print(keys[i]);
     }
 
     u8g2.sendBuffer();
     digitalToggle(LED_BUILTIN);
   }
- 
 }
 
-//CAN functions
-void CAN_RX_ISR (void) {
-	uint8_t RX_Message_ISR[8];
-	uint32_t ID;
-	CAN_RX(ID, RX_Message_ISR);
-	xQueueSendFromISR(msgInQ, RX_Message_ISR, NULL);
+// CAN functions
+void CAN_RX_ISR(void)
+{
+  uint8_t RX_Message_ISR[8];
+  uint32_t ID;
+  CAN_RX(ID, RX_Message_ISR);
+  xQueueSendFromISR(msgInQ, RX_Message_ISR, NULL);
 }
 
-void CAN_TX_Task (void * pvParameters) {
-	uint8_t msgOut[8];
-	while (1) {
-	xQueueReceive(msgOutQ, msgOut, portMAX_DELAY);
-		xSemaphoreTake(CAN_TX_Semaphore, portMAX_DELAY);
-		CAN_TX(0x123, msgOut);
-	}
+void CAN_TX_Task(void *pvParameters)
+{
+  uint8_t msgOut[8];
+  while (1)
+  {
+    xQueueReceive(msgOutQ, msgOut, portMAX_DELAY);
+    xSemaphoreTake(CAN_TX_Semaphore, portMAX_DELAY);
+    CAN_TX(0x123, msgOut);
+  }
 }
 
-void CAN_TX_ISR (void) {
-	xSemaphoreGiveFromISR(CAN_TX_Semaphore, NULL);
+void CAN_TX_ISR(void)
+{
+  xSemaphoreGiveFromISR(CAN_TX_Semaphore, NULL);
 }
 
-void decodeTask(void *pVparameters){
- 
+void decodeTask(void *pVparameters)
+{
 
-  while(1){
-    xQueueReceive(msgInQ, RX_Message, portMAX_DELAY); //wait for message
+  while (1)
+  {
+    xQueueReceive(msgInQ, RX_Message, portMAX_DELAY); // wait for message
     LinkedList TempList;
 
     bool press = false;
-    if(RX_Message[0] == 0x50){
+    if (RX_Message[0] == 0x50)
+    {
       press = true;
     }
-    else if(RX_Message[0] == 0x52){
+    else if (RX_Message[0] == 0x52)
+    {
       press = false;
     }
-   uint8_t octave = RX_Message[1];
-   uint8_t key = RX_Message[2];
-   
-   
-    TempList.head = currentStepSizes.head; //temp head for updating currentStepSizes at end
+    uint8_t octave = RX_Message[1];
+    uint8_t key = RX_Message[2];
+
+    TempList.head = currentStepSizes.head; // temp head for updating currentStepSizes at end
     TempList.tail = currentStepSizes.tail;
 
-    uint32_t stepsize = (uint32_t)((float)stepSizes[12*(octave)+key]);
+    uint32_t stepsize = (uint32_t)((float)stepSizes[12 * (octave - MIN_OCT) + key]);
 
-    if(press){
-      addNode(&TempList, stepsize); //add key to local list
+    if (press)
+    {
+      addNode(&TempList, stepsize); // add key to local list
     }
-    else if(!press){
-      Node* curr = TempList.head;
-      //check 1st node
-      if(curr->data == stepsize){ //if data in node is stepsize val for note&octave
-        TempList.head = curr->next; //set templist head(start to 2nd node)
-        free(curr);//free 1st node
+    else if (!press)
+    {
+      Node *curr = TempList.head;
+      // Check 1st node
+      if (curr->data == stepsize)
+      {                             // if data in node is stepsize val for note&octave
+        TempList.head = curr->next; // set templist head(start to 2nd node)
+        free(curr);                 // free 1st node
       }
-      else{
-        while(curr->next != nullptr){
-          if(curr->next->data == stepsize){ //if data in next node is stepsize val for note&octave
-            Node* temp = curr->next; //set temp to node to be deleted
-
-            if(curr->next->next == nullptr){ //if node to be deleted is last node
-              free(temp); //free node to be deleted
-              curr->next = nullptr; //set curr->next to null
-              TempList.tail = curr; //set templist tail to curr
+      else
+      {
+        while (curr->next != nullptr)
+        {
+          if (curr->next->data == stepsize)
+          {                          // if data in next node is stepsize val for note&octave
+            Node *temp = curr->next; // set temp to node to be deleted
+            if (curr->next->next == nullptr)
+            {                       // if node to be deleted is last node
+              free(temp);           // free node to be deleted
+              curr->next = nullptr; // set curr->next to null
+              TempList.tail = curr; // set templist tail to curr
               break;
             }
-            else{
-            curr->next = curr->next->next; //set curr->next to node after node to be deleted
-            free(temp); //free node to be deleted
+            else
+            {
+              curr->next = curr->next->next; // set curr->next to node after node to be deleted
+              free(temp);                    // free node to be deleted
             }
           }
-          curr = curr->next; //move to next node
+          curr = curr->next; // move to next node
         }
       }
-      
     }
-    //printList(&TempList);
+    // printList(&TempList);
 
-    //update currentStepSizes
+    // update currentStepSizes
     __atomic_store_n(&currentStepSizes.head, TempList.head, __ATOMIC_RELAXED);
     __atomic_store_n(&currentStepSizes.tail, TempList.tail, __ATOMIC_RELAXED);
     printList(&currentStepSizes);
-
   }
 }
 
@@ -708,8 +738,9 @@ void setup()
   setOutMuxBit(DEN_BIT, HIGH); // Enable display power supply
 
   // Initalise SINE
-  for (int i = 0; i < TABLE_SIZE; i++) {
-    sinTable[i] = 127 * sin((float) i / (float) TABLE_SIZE * 2.0 * PI);
+  for (int i = 0; i < TABLE_SIZE; i++)
+  {
+    sinTable[i] = 127 * sin((float)i / (float)TABLE_SIZE * 2.0 * PI);
   }
 
   // Initialise UART
@@ -718,17 +749,15 @@ void setup()
   // Create the mutex and assign its handle
   keyArrayMutex = xSemaphoreCreateMutex();
 
-  //CAN bus
+  // CAN bus
   CAN_Init(true);
-  setCANFilter(0x123,0x7ff);
+  setCANFilter(0x123, 0x7ff);
   CAN_RegisterRX_ISR(CAN_RX_ISR);
   CAN_RegisterTX_ISR(CAN_TX_ISR);
   CAN_Start();
-  msgInQ = xQueueCreate(36,8); //create queue for received messages
-  msgOutQ = xQueueCreate(36,8); //create queue for transmitted messages
-  CAN_TX_Semaphore = xSemaphoreCreateCounting(3,3); //3 slots for outgoing messages, start with 3 slots available. Max count = 3 so a 4th attempt is blocked
-
-
+  msgInQ = xQueueCreate(36, 8);                      // create queue for received messages
+  msgOutQ = xQueueCreate(36, 8);                     // create queue for transmitted messages
+  CAN_TX_Semaphore = xSemaphoreCreateCounting(3, 3); // 3 slots for outgoing messages, start with 3 slots available. Max count = 3 so a 4th attempt is blocked
 
   // Create timer for audio
   TIM_TypeDef *Instance = TIM1;
@@ -745,25 +774,25 @@ void setup()
   TaskHandle_t readControlsHandle = NULL;
   xTaskCreate(readControlsTask, "readControls", 256, NULL, 1, &readControlsHandle);
 
-  //setup threading for decoding messages
+  // setup threading for decoding messages
   TaskHandle_t decodeTaskHandle = NULL;
   xTaskCreate(
-  decodeTask,		/* Function that implements the task */
-  "decode",		/* Text name for the task */
-  256,      		/* Stack size in words, not bytes */
-  NULL,			/* Parameter passed into the task */
-  4,			/* Task priority */
-  &decodeTaskHandle);  /* Pointer to store the task handle */
+      decodeTask,         /* Function that implements the task */
+      "decode",           /* Text name for the task */
+      256,                /* Stack size in words, not bytes */
+      NULL,               /* Parameter passed into the task */
+      4,                  /* Task priority */
+      &decodeTaskHandle); /* Pointer to store the task handle */
 
-  //setup threading for sending messages
+  // setup threading for sending messages
   TaskHandle_t CAN_TX_TaskHandle = NULL;
   xTaskCreate(
-  CAN_TX_Task,		/* Function that implements the task */
-  "CAN_TX",		/* Text name for the task */
-  256,      		/* Stack size in words, not bytes */
-  NULL,			/* Parameter passed into the task */
-  3,			/* Task priority */
-  &CAN_TX_TaskHandle);  /* Pointer to store the task handle */
+      CAN_TX_Task,         /* Function that implements the task */
+      "CAN_TX",            /* Text name for the task */
+      256,                 /* Stack size in words, not bytes */
+      NULL,                /* Parameter passed into the task */
+      3,                   /* Task priority */
+      &CAN_TX_TaskHandle); /* Pointer to store the task handle */
 
   // Start the scheduler
   vTaskStartScheduler();

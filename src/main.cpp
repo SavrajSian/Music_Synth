@@ -21,112 +21,119 @@ constexpr uint32_t calculateStepSize(float frequency)
 }
 // 2 - 8 Octaves of step sizes - super long
 constexpr uint32_t stepSizes[] = {
-  calculateStepSize(calculateFreq(-33)),// C2
-  calculateStepSize(calculateFreq(-32)),// C#2
-  calculateStepSize(calculateFreq(-31)),// D2
-  calculateStepSize(calculateFreq(-30)),// D#2
-  calculateStepSize(calculateFreq(-29)),// E2
-  calculateStepSize(calculateFreq(-28)),// F2
-  calculateStepSize(calculateFreq(-27)),// F#2
-  calculateStepSize(calculateFreq(-26)),// G2
-  calculateStepSize(calculateFreq(-25)),// G#2
-  calculateStepSize(calculateFreq(-24)),// A2
-  calculateStepSize(calculateFreq(-23)),// A#2
-  calculateStepSize(calculateFreq(-22)),// B2
-  calculateStepSize(calculateFreq(-21)),// C3
-  calculateStepSize(calculateFreq(-20)),// C#3
-  calculateStepSize(calculateFreq(-19)),// D3
-  calculateStepSize(calculateFreq(-18)),// D#3
-  calculateStepSize(calculateFreq(-17)),// E3
-  calculateStepSize(calculateFreq(-16)),// F3
-  calculateStepSize(calculateFreq(-15)),// F#3
-  calculateStepSize(calculateFreq(-14)),// G3
-  calculateStepSize(calculateFreq(-13)),// G#3
-  calculateStepSize(calculateFreq(-12)),// A3
-  calculateStepSize(calculateFreq(-11)),// A#3
-  calculateStepSize(calculateFreq(-10)),// B3
-  calculateStepSize(calculateFreq(-9)), // C4
-  calculateStepSize(calculateFreq(-8)), // C#4
-  calculateStepSize(calculateFreq(-7)), // D4
-  calculateStepSize(calculateFreq(-6)), // D#4
-  calculateStepSize(calculateFreq(-5)), // E4
-  calculateStepSize(calculateFreq(-4)), // F4
-  calculateStepSize(calculateFreq(-3)), // F#4
-  calculateStepSize(calculateFreq(-2)), // G4
-  calculateStepSize(calculateFreq(-1)), // G#4
-  calculateStepSize(calculateFreq(0)), // A4
-  calculateStepSize(calculateFreq(1)), // A#4
-  calculateStepSize(calculateFreq(2)), // B4
-  calculateStepSize(calculateFreq(3)), // C5
-  calculateStepSize(calculateFreq(4)), // C#5
-  calculateStepSize(calculateFreq(5)), // D5
-  calculateStepSize(calculateFreq(6)), // D#5
-  calculateStepSize(calculateFreq(7)), // E5
-  calculateStepSize(calculateFreq(8)), // F5
-  calculateStepSize(calculateFreq(9)), // F#5
-  calculateStepSize(calculateFreq(10)), // G5
-  calculateStepSize(calculateFreq(11)), // G#5
-  calculateStepSize(calculateFreq(12)), // A5
-  calculateStepSize(calculateFreq(13)), // A#5
-  calculateStepSize(calculateFreq(14)), // B5
-  calculateStepSize(calculateFreq(15)), // C6
-  calculateStepSize(calculateFreq(16)), // C#6
-  calculateStepSize(calculateFreq(17)), // D6
-  calculateStepSize(calculateFreq(18)), // D#6
-  calculateStepSize(calculateFreq(19)), // E6
-  calculateStepSize(calculateFreq(20)), // F6
-  calculateStepSize(calculateFreq(21)), // F#6
-  calculateStepSize(calculateFreq(22)), // G6
-  calculateStepSize(calculateFreq(23)), // G#6
-  calculateStepSize(calculateFreq(24)), // A6
-  calculateStepSize(calculateFreq(25)), // A#6
-  calculateStepSize(calculateFreq(26)), // B6
-  calculateStepSize(calculateFreq(27)), // C7
-  calculateStepSize(calculateFreq(28)), // C#7
-  calculateStepSize(calculateFreq(29)), // D7
-  calculateStepSize(calculateFreq(30)), // D#7
-  calculateStepSize(calculateFreq(31)), // E7
-  calculateStepSize(calculateFreq(32)), // F7
-  calculateStepSize(calculateFreq(33)), // F#7
-  calculateStepSize(calculateFreq(34)), // G7
-  calculateStepSize(calculateFreq(35)), // G#7
-  calculateStepSize(calculateFreq(36)), // A7
-  calculateStepSize(calculateFreq(37)), // A#7
-  calculateStepSize(calculateFreq(38)), // B7
-  calculateStepSize(calculateFreq(39)), // C8
-  calculateStepSize(calculateFreq(40)), // C#8
-  calculateStepSize(calculateFreq(41)), // D8
-  calculateStepSize(calculateFreq(42)), // D#8
-  calculateStepSize(calculateFreq(43)), // E8
-  calculateStepSize(calculateFreq(44)), // F8
-  calculateStepSize(calculateFreq(45)), // F#8
-  calculateStepSize(calculateFreq(46)), // G8
-  calculateStepSize(calculateFreq(47)), // G#8
-  calculateStepSize(calculateFreq(48)), // A8
-  calculateStepSize(calculateFreq(49)), // A#8
-  calculateStepSize(calculateFreq(50))  // B8
+    calculateStepSize(calculateFreq(-33)), // C2
+    calculateStepSize(calculateFreq(-32)), // C#2
+    calculateStepSize(calculateFreq(-31)), // D2
+    calculateStepSize(calculateFreq(-30)), // D#2
+    calculateStepSize(calculateFreq(-29)), // E2
+    calculateStepSize(calculateFreq(-28)), // F2
+    calculateStepSize(calculateFreq(-27)), // F#2
+    calculateStepSize(calculateFreq(-26)), // G2
+    calculateStepSize(calculateFreq(-25)), // G#2
+    calculateStepSize(calculateFreq(-24)), // A2
+    calculateStepSize(calculateFreq(-23)), // A#2
+    calculateStepSize(calculateFreq(-22)), // B2
+    calculateStepSize(calculateFreq(-21)), // C3
+    calculateStepSize(calculateFreq(-20)), // C#3
+    calculateStepSize(calculateFreq(-19)), // D3
+    calculateStepSize(calculateFreq(-18)), // D#3
+    calculateStepSize(calculateFreq(-17)), // E3
+    calculateStepSize(calculateFreq(-16)), // F3
+    calculateStepSize(calculateFreq(-15)), // F#3
+    calculateStepSize(calculateFreq(-14)), // G3
+    calculateStepSize(calculateFreq(-13)), // G#3
+    calculateStepSize(calculateFreq(-12)), // A3
+    calculateStepSize(calculateFreq(-11)), // A#3
+    calculateStepSize(calculateFreq(-10)), // B3
+    calculateStepSize(calculateFreq(-9)),  // C4
+    calculateStepSize(calculateFreq(-8)),  // C#4
+    calculateStepSize(calculateFreq(-7)),  // D4
+    calculateStepSize(calculateFreq(-6)),  // D#4
+    calculateStepSize(calculateFreq(-5)),  // E4
+    calculateStepSize(calculateFreq(-4)),  // F4
+    calculateStepSize(calculateFreq(-3)),  // F#4
+    calculateStepSize(calculateFreq(-2)),  // G4
+    calculateStepSize(calculateFreq(-1)),  // G#4
+    calculateStepSize(calculateFreq(0)),   // A4
+    calculateStepSize(calculateFreq(1)),   // A#4
+    calculateStepSize(calculateFreq(2)),   // B4
+    calculateStepSize(calculateFreq(3)),   // C5
+    calculateStepSize(calculateFreq(4)),   // C#5
+    calculateStepSize(calculateFreq(5)),   // D5
+    calculateStepSize(calculateFreq(6)),   // D#5
+    calculateStepSize(calculateFreq(7)),   // E5
+    calculateStepSize(calculateFreq(8)),   // F5
+    calculateStepSize(calculateFreq(9)),   // F#5
+    calculateStepSize(calculateFreq(10)),  // G5
+    calculateStepSize(calculateFreq(11)),  // G#5
+    calculateStepSize(calculateFreq(12)),  // A5
+    calculateStepSize(calculateFreq(13)),  // A#5
+    calculateStepSize(calculateFreq(14)),  // B5
+    calculateStepSize(calculateFreq(15)),  // C6
+    calculateStepSize(calculateFreq(16)),  // C#6
+    calculateStepSize(calculateFreq(17)),  // D6
+    calculateStepSize(calculateFreq(18)),  // D#6
+    calculateStepSize(calculateFreq(19)),  // E6
+    calculateStepSize(calculateFreq(20)),  // F6
+    calculateStepSize(calculateFreq(21)),  // F#6
+    calculateStepSize(calculateFreq(22)),  // G6
+    calculateStepSize(calculateFreq(23)),  // G#6
+    calculateStepSize(calculateFreq(24)),  // A6
+    calculateStepSize(calculateFreq(25)),  // A#6
+    calculateStepSize(calculateFreq(26)),  // B6
+    calculateStepSize(calculateFreq(27)),  // C7
+    calculateStepSize(calculateFreq(28)),  // C#7
+    calculateStepSize(calculateFreq(29)),  // D7
+    calculateStepSize(calculateFreq(30)),  // D#7
+    calculateStepSize(calculateFreq(31)),  // E7
+    calculateStepSize(calculateFreq(32)),  // F7
+    calculateStepSize(calculateFreq(33)),  // F#7
+    calculateStepSize(calculateFreq(34)),  // G7
+    calculateStepSize(calculateFreq(35)),  // G#7
+    calculateStepSize(calculateFreq(36)),  // A7
+    calculateStepSize(calculateFreq(37)),  // A#7
+    calculateStepSize(calculateFreq(38)),  // B7
+    calculateStepSize(calculateFreq(39)),  // C8
+    calculateStepSize(calculateFreq(40)),  // C#8
+    calculateStepSize(calculateFreq(41)),  // D8
+    calculateStepSize(calculateFreq(42)),  // D#8
+    calculateStepSize(calculateFreq(43)),  // E8
+    calculateStepSize(calculateFreq(44)),  // F8
+    calculateStepSize(calculateFreq(45)),  // F#8
+    calculateStepSize(calculateFreq(46)),  // G8
+    calculateStepSize(calculateFreq(47)),  // G#8
+    calculateStepSize(calculateFreq(48)),  // A8
+    calculateStepSize(calculateFreq(49)),  // A#8
+    calculateStepSize(calculateFreq(50))   // B8
 };
 
 // Audio definitions
-struct Node {
+// Linked list struct for step sizes
+struct Node
+{
   uint32_t data = 0;
-  Node* next = nullptr;
+  Node *next = nullptr;
 };
 
-struct LinkedList{
-  Node* head = nullptr;
-  Node* tail = nullptr;
+struct LinkedList
+{
+  Node *head = nullptr;
+  Node *tail = nullptr;
 };
 
 const uint32_t interval = 100; // Display update interval
 volatile LinkedList currentStepSizes;
 
+// Arrays for selecting features
 const char *notes[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 const char *keys[12] = {};
 const char *waves[4] = {"Saw", "Square", "Triangle", "Sine"};
 const char *effects[4] = {"Clean", "Vibrato", "None", "None"};
 
+// Sample to accumulate the phases
 volatile int32_t sample = 0;
+
+// Lookup table
 const int TABLE_SIZE = 1028;
 float sinTable[TABLE_SIZE];
 
@@ -142,14 +149,14 @@ volatile int effect = 0;
 
 // Octave Settings
 volatile int octaveSelect = 4;
+volatile bool OctToggle = false;
 const int MIN_OCT = 2;
 const int MAX_OCT = 8;
-volatile bool OctToggle = false;
 
 // Pitch Bend
 volatile float pitchBend = 1;
-float calZero = 0;
 volatile float vibrato = 0;
+volatile float calZero = 0;
 volatile bool vibToggle = false;
 
 // Pin definitions
@@ -221,108 +228,119 @@ void setRow(uint8_t rowIdx)
 }
 
 // Prints the contents of a linked list
-void printList(volatile LinkedList* list) {
-    Node* current = list->head;
-    while (current != nullptr) {
-        Serial.print(current->data);
-        Serial.print(" | ");
-        current = current->next;
-    }
-    Serial.println();
+void printList(volatile LinkedList *list)
+{
+  Node *current = list->head;
+  while (current != nullptr)
+  {
+    Serial.print(current->data);
+    Serial.print(" | ");
+    current = current->next;
+  }
+  Serial.println();
 }
 
 void sampleISR()
 {
   static uint32_t phase_accs[84] = {};
-  switch(waveform) {
-    case 0:
-      // SAW
+  switch (waveform)
+  {
+  case 0:
+    // SAW
+    {
+      int32_t Vout = 0;
+      sample = 0;
+      Node *current = currentStepSizes.head;
+      int i = 0;
+      while (current != nullptr)
       {
-        int32_t Vout = 0;
-        sample = 0;
-        Node* current = currentStepSizes.head;
-        int i = 0;
-        while (current != nullptr){
-          uint32_t stepSize = current->data;
-          phase_accs[i] += stepSize;
-          Vout = (phase_accs[i] >> 24) - 128;
-          sample += Vout;
-          current = current->next;
-          i += 1;
-        }
-        sample = sample >> (8 - volume);
-        analogWrite(OUTR_PIN, sample/i + 128);
-      }
-      break;
-    case 1:
-      // SQUARE
-      {
-        int32_t Vout = 0;
-        sample = 0;
-        Node* current = currentStepSizes.head;
-        int i = 0;
-
-        while (current != nullptr){
-          uint32_t stepSize = current->data;
-          phase_accs[i] += stepSize;
-          if (phase_accs[i] < UINT32_MAX / 2) {
-            Vout = 63;
-          }
-          else{
-            Vout = -64;
-          }
+        uint32_t stepSize = current->data;
+        phase_accs[i] += stepSize;
+        Vout = (phase_accs[i] >> 24) - 128;
         sample += Vout;
         current = current->next;
         i += 1;
-        }
-        sample = sample * volume / 8;
-        analogWrite(OUTR_PIN, sample/i + 64);
       }
-      break;
-    case 2:
-      // TRIANGLE
-      {
+      sample = sample >> (8 - volume);
+      analogWrite(OUTR_PIN, sample / i + 128);
+    }
+    break;
+  case 1:
+    // SQUARE
+    {
       int32_t Vout = 0;
       sample = 0;
-      Node* current = currentStepSizes.head;
+      Node *current = currentStepSizes.head;
       int i = 0;
 
-      while (current != nullptr){
+      while (current != nullptr)
+      {
         uint32_t stepSize = current->data;
         phase_accs[i] += stepSize;
-        if (phase_accs[i] < UINT32_MAX / 2) {
-          Vout = (phase_accs[i] >> 24);
+        if (phase_accs[i] < UINT32_MAX / 2)
+        {
+          Vout = 63;
         }
-        else{
-          Vout = (-phase_accs[i] >> 24);
+        else
+        {
+          Vout = -64;
         }
-      sample += Vout;
-      current = current->next;
-      i += 1;
+        sample += Vout;
+        current = current->next;
+        i += 1;
       }
       sample = sample * volume / 8;
-      analogWrite(OUTR_PIN, sample/i + 128);
+      analogWrite(OUTR_PIN, sample / i + 64);
     }
-      break;
-    case 3:
-  // SINE
-  {
-    int32_t Vout = 0;
-    sample = 0;
-    Node* current = currentStepSizes.head;
-    int i = 0;
-    while (current != nullptr) {
-      uint32_t stepSize = current->data;
-      phase_accs[i] += stepSize;
-      int index = 1027 * ((float)phase_accs[i]/(float)UINT32_MAX);
-      sample += (int32_t)sinTable[index];
-      current = current->next;
-      i += 1;
+    break;
+  case 2:
+    // TRIANGLE
+    {
+      int32_t Vout = 0;
+      sample = 0;
+      Node *current = currentStepSizes.head;
+      int i = 0;
+
+      while (current != nullptr)
+      {
+        uint32_t stepSize = current->data;
+        phase_accs[i] += stepSize;
+        if (phase_accs[i] < UINT32_MAX / 2)
+        {
+          Vout = (phase_accs[i] >> 24);
+        }
+        else
+        {
+          Vout = (-phase_accs[i] >> 24);
+        }
+        sample += Vout;
+        current = current->next;
+        i += 1;
+      }
+      sample = sample * volume / 8;
+      analogWrite(OUTR_PIN, sample / i + 128);
     }
-    sample = sample * volume / 8;
-    analogWrite(OUTR_PIN, sample/i + 128);
-  }
-  break;
+    break;
+  case 3:
+    // SINE
+    {
+      int32_t Vout = 0;
+      sample = 0;
+      Node *current = currentStepSizes.head;
+      int i = 0;
+      while (current != nullptr)
+      {
+        uint32_t stepSize = current->data;
+        phase_accs[i] += stepSize;
+        int index = 1027 * ((float)phase_accs[i] / (float)UINT32_MAX);
+        sample += (int32_t)sinTable[index];
+        current = current->next;
+        i += 1;
+      }
+      sample = sample * volume / 8;
+      analogWrite(OUTR_PIN, sample / i + 128);
+    }
+    break;
   }
 }
 
@@ -383,11 +401,13 @@ private:
   int m_prevTransition = 0;
 };
 
-void addNode(LinkedList* list, const int data) {
-  struct Node* newNode = new Node;
+void addNode(LinkedList *list, const int data)
+{
+  struct Node *newNode = new Node;
   newNode->data = data;
   newNode->next = nullptr;
-  if (list->head == nullptr){
+  if (list->head == nullptr)
+  {
     list->head = newNode;
     list->tail = newNode;
     return;
@@ -408,29 +428,33 @@ void scanKeysTask(void *pvParameters)
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
     LinkedList allKeysPressed;
     pressedKeys = 0;
-    memset((void*)keys, 0, sizeof(keys));
-  
+    memset((void *)keys, 0, sizeof(keys));
+
     // Read keys
-    for (size_t row = 0; row < 3; row++) {
+    for (size_t row = 0; row < 3; row++)
+    {
       setRow(row);
       delayMicroseconds(3);
-      pressedKeys |= readCols() << (4*row);
+      pressedKeys |= readCols() << (4 * row);
     }
     pressedKeys = ~pressedKeys & 0x0FFF;
 
     // Add key step sizes to linked list  (polyphony)
-    for (int i = 0; i < 12; i++) {
-      if (pressedKeys & (1 << i)) { 
-        addNode(&allKeysPressed, (uint32_t)((float)stepSizes[12*(octaveSelect-2)+i] * pitchBend));
-        keys[i] = notes[i];  
+    for (int i = 0; i < 12; i++)
+    {
+      if (pressedKeys & (1 << i))
+      {
+        addNode(&allKeysPressed, (uint32_t)((float)stepSizes[12 * (octaveSelect - 2) + i] * pitchBend));
+        keys[i] = notes[i];
       }
     }
 
     // Read knobs
-    for (size_t row = 3; row < 5; row++) {
+    for (size_t row = 3; row < 5; row++)
+    {
       setRow(row);
       delayMicroseconds(3);
-      keyArray[row-3] = readCols();
+      keyArray[row - 3] = readCols();
     }
 
     xSemaphoreGive(keyArrayMutex);
@@ -438,61 +462,71 @@ void scanKeysTask(void *pvParameters)
     // Send keys to sampler
     __atomic_store_n(&currentStepSizes.head, allKeysPressed.head, __ATOMIC_RELAXED);
     __atomic_store_n(&currentStepSizes.tail, allKeysPressed.tail, __ATOMIC_RELAXED);
-    //printList(&allKeysPressed);
+    // printList(&allKeysPressed);
   }
 }
 
-void octaveControl(){
+void octaveControl()
+{
   // Read joystick (octaves)
-    float joyX = analogRead(A1);
-    float joyXscale = (joyX / 1023) * 100;
+  float joyX = analogRead(A1);
+  float joyXscale = (joyX / 1023) * 100;
 
-    if (joyXscale > 80 && OctToggle == false){
-      __atomic_store_n(&octaveSelect, max(__atomic_load_n(&octaveSelect, __ATOMIC_RELAXED) - 1, MIN_OCT), __ATOMIC_RELAXED);
-      OctToggle = true;
-    }
-    else if (joyXscale < 15 && OctToggle == false){
-      __atomic_store_n(&octaveSelect, min(__atomic_load_n(&octaveSelect, __ATOMIC_RELAXED) + 1, MAX_OCT), __ATOMIC_RELAXED);
-      OctToggle = true;
-    }
-    else if (joyXscale >= 15 && joyXscale <= 80){
-      OctToggle = false;
-    }
+  if (joyXscale > 80 && OctToggle == false)
+  {
+    __atomic_store_n(&octaveSelect, max(__atomic_load_n(&octaveSelect, __ATOMIC_RELAXED) - 1, MIN_OCT), __ATOMIC_RELAXED);
+    OctToggle = true;
+  }
+  else if (joyXscale < 15 && OctToggle == false)
+  {
+    __atomic_store_n(&octaveSelect, min(__atomic_load_n(&octaveSelect, __ATOMIC_RELAXED) + 1, MAX_OCT), __ATOMIC_RELAXED);
+    OctToggle = true;
+  }
+  else if (joyXscale >= 15 && joyXscale <= 80)
+  {
+    OctToggle = false;
+  }
 }
 
-void pitchControl(){
+void pitchControl()
+{
   // Read joystick (stepsize)
   float joyY = analogRead(A0);
   float joyYscale = (joyY / 1023);
   pitchBend = 1.00f;
 
-  if (joyYscale < calZero - 0.05) {
+  if (joyYscale < calZero - 0.05)
+  {
     pitchBend = 1 + (calZero - joyYscale) * 0.5;
   }
-  else if (joyYscale > calZero + 0.05) {
+  else if (joyYscale > calZero + 0.05)
+  {
     pitchBend = 1 - (joyYscale - calZero) * 0.5;
   }
 
   // Vibrato
-  if (effect == 1 && pressedKeys != 0){
-    if (vibrato < 0.8 && vibToggle == false){
+  if (effect == 1 && pressedKeys != 0)
+  {
+    if (vibrato < 0.8 && vibToggle == false)
+    {
       vibrato += 0.04;
       pitchBend = 1 + vibrato;
-      if (vibrato >= 0.1){
+      if (vibrato >= 0.1)
+      {
         vibToggle = true;
       }
-      
     }
-    if (vibToggle == true){
+    if (vibToggle == true)
+    {
       vibrato -= 0.02;
       pitchBend = 1 + vibrato;
-      if (vibrato <= 0) {
+      if (vibrato <= 0)
+      {
         vibToggle = false;
       }
     }
     // Serial.println(pitchBend);
   }
-
 }
 
 void readControlsTask(void *pvParameters)
@@ -514,14 +548,13 @@ void readControlsTask(void *pvParameters)
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
     // Update Knobs
-    volumeKnob.update(keyArray[1] >> 2);    // KNOB 0       ( 0 )    ( 1 )    ( 2 )    ( 3 )
-    functionKnob.update(keyArray[1] & 0x03);// KNOB 1      [4]>>2  [4]&0x03  [3]>>2  [3]&0x03
-    effectKnob.update(keyArray[0] >> 2);    // KNOB 3       Row4     Row4     Row3     Row3
+    volumeKnob.update(keyArray[1] >> 2);     // KNOB 0       ( 0 )    ( 1 )    ( 2 )    ( 3 )
+    functionKnob.update(keyArray[1] & 0x03); // KNOB 1      [4]>>2  [4]&0x03  [3]>>2  [3]&0x03
+    effectKnob.update(keyArray[0] >> 2);     // KNOB 3       Row4     Row4     Row3     Row3
 
-    octaveControl(); 
+    octaveControl();
     pitchControl();
   }
-
 }
 
 void displayKeysTask(void *pvParameters)
@@ -553,13 +586,13 @@ void displayKeysTask(void *pvParameters)
 
     u8g2.setCursor(2, 10);
     u8g2.print("KEY: ");
-    for (size_t i = 0; i < 12; i++){
+    for (size_t i = 0; i < 12; i++)
+    {
       u8g2.print(keys[i]);
     }
     u8g2.sendBuffer();
     digitalToggle(LED_BUILTIN);
   }
- 
 }
 
 void setup()
@@ -589,8 +622,9 @@ void setup()
   setOutMuxBit(DEN_BIT, HIGH); // Enable display power supply
 
   // Initalise SINE
-  for (int i = 0; i < TABLE_SIZE; i++) {
-    sinTable[i] = 127 * sin((float) i / (float) TABLE_SIZE * 2.0 * PI);
+  for (int i = 0; i < TABLE_SIZE; i++)
+  {
+    sinTable[i] = 127 * sin((float)i / (float)TABLE_SIZE * 2.0 * PI);
   }
 
   // Initialise UART
