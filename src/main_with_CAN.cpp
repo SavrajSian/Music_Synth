@@ -153,6 +153,7 @@ QueueHandle_t msgInQ;
 QueueHandle_t msgOutQ;
 uint8_t RX_Message[8] = {0};
 SemaphoreHandle_t CAN_TX_Semaphore;
+bool send = false;
 
 // Octave Settings
 volatile int octaveSelect = 4;
@@ -428,11 +429,15 @@ void scanKeysTask(void *pvParameters)
   bool run_once = true;
   while (run_once)
   {
+<<<<<<< HEAD
     // vTaskDelayUntil(&xLastWakeTime, xFrequency);
+=======
+
+    vTaskDelayUntil(&xLastWakeTime, xFrequency);
+>>>>>>> acd39bd7e9401d34f4e3814788b9662da22cd6f8
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
     LinkedList allKeysPressed;
     pressedKeys = 0;
-    memset((void *)keys, 0, sizeof(keys));
     uint8_t sendpress[12] = {0};
     uint8_t sendrelease[12] = {0};
 
@@ -454,6 +459,7 @@ void scanKeysTask(void *pvParameters)
     }
     xSemaphoreGive(keyArrayMutex);
 
+<<<<<<< HEAD
     for (int i = 0; i < 12; i++)
     {
       keys[i] = notes[i];
@@ -463,8 +469,107 @@ void scanKeysTask(void *pvParameters)
       TX_Message[2] = i;
       xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
     
-    }
+=======
+    if(send){ //only send messages if set to send
+      for (int i = 0; i < 12; i++)
+      {
+        if (pressedKeys & (1 << i))
+        {
+          keys[i] = notes[i];
+          if (!(prevkeys & (1 << i)))
+          {
+            sendpress[i] = 1;
+            TX_Message[0] = 0x50;
+            TX_Message[1] = octaveSelect;
+            TX_Message[2] = i;
+            xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
+            Serial.println("sent press");
+          }
+        }
 
+        else if (!(pressedKeys & (1 << i)))
+        { // if pressedkeys bit = 0
+          if (prevkeys & (1 << i))
+          { // if prev bit = 1
+            keys[i] = 0;
+            sendrelease[i] = 1;
+            TX_Message[0] = 0x52;
+            TX_Message[1] = octaveSelect;
+            TX_Message[2] = i;
+            xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
+            Serial.println("sent release");
+          }
+        }
+      }
+
+>>>>>>> acd39bd7e9401d34f4e3814788b9662da22cd6f8
+    }
+    
+    else if(!send){ //if set to recieve mode
+      LinkedList TempList;
+      TempList.head = currentStepSizes.head;
+      TempList.tail = currentStepSizes.tail;
+
+      for(int i = 0; i < 12; i++){
+        if(pressedKeys & (1 << i)){
+          if(!(prevkeys & (1 << i))){ //if note pressed down
+            addNode(&TempList, (uint32_t)((float)stepSizes[12 * (octaveSelect - 2) + i] * pitchBend));
+            __atomic_store_n(&currentStepSizes.head, TempList.head, __ATOMIC_RELAXED);
+            __atomic_store_n(&currentStepSizes.tail, TempList.tail, __ATOMIC_RELAXED);  
+             keys[i] = notes[i];          
+          }
+        }
+
+        else if(!(pressedKeys & (1 << i))){
+          if(prevkeys & (1 << i)){ //if note released
+
+            Node *curr = TempList.head;
+            uint32_t stepsize = (uint32_t)((float)stepSizes[12 * (octaveSelect - 2) + i]);
+            keys[i] = 0;   
+
+            // Check 1st node
+            if (curr->data == stepsize)
+            {                             // if data in node is stepsize val for note&octave
+              TempList.head = curr->next; // set templist head(start to 2nd node)
+              free(curr);                 // free 1st node
+            }
+            else
+            {
+              
+              while (curr->next != nullptr)
+              {
+                if (curr->next->data == stepsize)
+                {                          // if data in next node is stepsize val for note&octave
+                  
+                  Node *temp = curr->next; // set temp to node to be deleted
+                  if (curr->next->next == nullptr)
+                  {                       // if node to be deleted is last node
+                    free(temp);           // free node to be deleted
+                    curr->next = nullptr; // set curr->next to null
+                    TempList.tail = curr; // set templist tail to curr
+                    break;
+                  }
+                  else
+                  {
+                    curr->next = curr->next->next; // set curr->next to node after node to be deleted
+                    free(temp);                    // free node to be deleted
+                  }
+                }
+                curr = curr->next; // move to next node
+                
+              }  
+
+            }
+            __atomic_store_n(&currentStepSizes.head, TempList.head, __ATOMIC_RELAXED);
+            __atomic_store_n(&currentStepSizes.tail, TempList.tail, __ATOMIC_RELAXED);
+
+          }
+
+        }
+
+      } 
+
+    }
     prevkeys = pressedKeys;
     run_once = false;
   }
@@ -537,23 +642,25 @@ void scanKeysTask(void *pvParameters)
 
 void octaveControl()
 {
-  // Read joystick (octaves)
-  float joyX = analogRead(A1);
-  float joyXscale = (joyX / 1023) * 100;
+  if(pressedKeys == 0){ //only change octave if no keys are pressed
+    // Read joystick (octaves)
+    float joyX = analogRead(A1);
+    float joyXscale = (joyX / 1023) * 100;
 
-  if (joyXscale > 80 && OctToggle == false)
-  {
-    __atomic_store_n(&octaveSelect, max(__atomic_load_n(&octaveSelect, __ATOMIC_RELAXED) - 1, MIN_OCT), __ATOMIC_RELAXED);
-    OctToggle = true;
-  }
-  else if (joyXscale < 15 && OctToggle == false)
-  {
-    __atomic_store_n(&octaveSelect, min(__atomic_load_n(&octaveSelect, __ATOMIC_RELAXED) + 1, MAX_OCT), __ATOMIC_RELAXED);
-    OctToggle = true;
-  }
-  else if (joyXscale >= 15 && joyXscale <= 80)
-  {
-    OctToggle = false;
+    if (joyXscale > 80 && OctToggle == false)
+    {
+      __atomic_store_n(&octaveSelect, max(__atomic_load_n(&octaveSelect, __ATOMIC_RELAXED) - 1, MIN_OCT), __ATOMIC_RELAXED);
+      OctToggle = true;
+    }
+    else if (joyXscale < 15 && OctToggle == false)
+    {
+      __atomic_store_n(&octaveSelect, min(__atomic_load_n(&octaveSelect, __ATOMIC_RELAXED) + 1, MAX_OCT), __ATOMIC_RELAXED);
+      OctToggle = true;
+    }
+    else if (joyXscale >= 15 && joyXscale <= 80)
+    {
+      OctToggle = false;
+    }
   }
 }
 
@@ -634,7 +741,7 @@ void displayKeysTask(void *pvParameters)
   while (1)
   {
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
-    // Serial.println("Displaying keys");
+
 
     u8g2.clearBuffer();
     u8g2.setFont(u8g2_font_profont10_tf);
@@ -660,6 +767,14 @@ void displayKeysTask(void *pvParameters)
     for (size_t i = 0; i < 12; i++)
     {
       u8g2.print(keys[i]);
+    }
+
+    u8g2.setCursor(100, 30);
+    if(send){
+      u8g2.print("SEND");
+    }
+    else{
+      u8g2.print("RECV");
     }
 
     u8g2.sendBuffer();
@@ -695,71 +810,75 @@ void CAN_TX_ISR(void)
 void decodeTask(void *pVparameters)
 {
 
-  while (1)
-  {
-    xQueueReceive(msgInQ, RX_Message, portMAX_DELAY); // wait for message
-    LinkedList TempList;
+  while (1){
+          xQueueReceive(msgInQ, RX_Message, portMAX_DELAY); // wait for message
 
-    bool press = false;
-    if (RX_Message[0] == 0x50)
-    {
-      press = true;
-    }
-    else if (RX_Message[0] == 0x52)
-    {
-      press = false;
-    }
-    uint8_t octave = RX_Message[1];
-    uint8_t key = RX_Message[2];
+          if(!send){
+            Serial.println("decoding");
+            LinkedList TempList;
 
-    TempList.head = currentStepSizes.head; // temp head for updating currentStepSizes at end
-    TempList.tail = currentStepSizes.tail;
-
-    uint32_t stepsize = (uint32_t)((float)stepSizes[12 * (octave - MIN_OCT) + key]);
-
-    if (press)
-    {
-      addNode(&TempList, stepsize); // add key to local list
-    }
-    else if (!press)
-    {
-      Node *curr = TempList.head;
-      // Check 1st node
-      if (curr->data == stepsize)
-      {                             // if data in node is stepsize val for note&octave
-        TempList.head = curr->next; // set templist head(start to 2nd node)
-        free(curr);                 // free 1st node
-      }
-      else
-      {
-        while (curr->next != nullptr)
-        {
-          if (curr->next->data == stepsize)
-          {                          // if data in next node is stepsize val for note&octave
-            Node *temp = curr->next; // set temp to node to be deleted
-            if (curr->next->next == nullptr)
-            {                       // if node to be deleted is last node
-              free(temp);           // free node to be deleted
-              curr->next = nullptr; // set curr->next to null
-              TempList.tail = curr; // set templist tail to curr
-              break;
-            }
-            else
+            bool press = false;
+            if (RX_Message[0] == 0x50)
             {
-              curr->next = curr->next->next; // set curr->next to node after node to be deleted
-              free(temp);                    // free node to be deleted
+              press = true;
             }
-          }
-          curr = curr->next; // move to next node
-        }
-      }
-    }
-    // printList(&TempList);
+            else if (RX_Message[0] == 0x52)
+            {
+              press = false;
+            }
+            uint8_t octave = RX_Message[1];
+            uint8_t key = RX_Message[2];
 
-    // update currentStepSizes
-    __atomic_store_n(&currentStepSizes.head, TempList.head, __ATOMIC_RELAXED);
-    __atomic_store_n(&currentStepSizes.tail, TempList.tail, __ATOMIC_RELAXED);
-    printList(&currentStepSizes);
+            TempList.head = currentStepSizes.head; // temp head for updating currentStepSizes at end
+            TempList.tail = currentStepSizes.tail;
+
+            uint32_t stepsize = (uint32_t)((float)stepSizes[12 * (octave - MIN_OCT) + key]);
+
+            if (press)
+            {
+              addNode(&TempList, stepsize); // add key to local list
+            }
+            else if (!press)
+            {
+              Node *curr = TempList.head;
+              // Check 1st node
+              if (curr->data == stepsize)
+              {                             // if data in node is stepsize val for note&octave
+                TempList.head = curr->next; // set templist head(start to 2nd node)
+                free(curr);                 // free 1st node
+              }
+              else
+              {
+                while (curr->next != nullptr)
+                {
+                  if (curr->next->data == stepsize)
+                  {                          // if data in next node is stepsize val for note&octave
+                    Node *temp = curr->next; // set temp to node to be deleted
+                    if (curr->next->next == nullptr)
+                    {                       // if node to be deleted is last node
+                      free(temp);           // free node to be deleted
+                      curr->next = nullptr; // set curr->next to null
+                      TempList.tail = curr; // set templist tail to curr
+                      break;
+                    }
+                    else
+                    {
+                      curr->next = curr->next->next; // set curr->next to node after node to be deleted
+                      free(temp);                    // free node to be deleted
+                    }
+                  }
+                  curr = curr->next; // move to next node
+                }
+              }
+            }
+            // printList(&TempList);
+
+            // update currentStepSizes
+            __atomic_store_n(&currentStepSizes.head, TempList.head, __ATOMIC_RELAXED);
+            __atomic_store_n(&currentStepSizes.tail, TempList.tail, __ATOMIC_RELAXED);
+            printList(&currentStepSizes);
+          }
+        
   }
 }
 
@@ -802,7 +921,7 @@ void setup()
   keyArrayMutex = xSemaphoreCreateMutex();
 
   // CAN bus
-  CAN_Init(true);
+  CAN_Init(false);
   setCANFilter(0x123, 0x7ff);
   CAN_RegisterRX_ISR(CAN_RX_ISR);
   CAN_RegisterTX_ISR(CAN_TX_ISR);
@@ -821,7 +940,7 @@ void setup()
 
   // Runs the key detection and display on separate tasks
   TaskHandle_t scanKeysHandle = NULL;
-  xTaskCreate(scanKeysTask, "scanKeys", 64, NULL, 2, &scanKeysHandle);
+  xTaskCreate(scanKeysTask, "scanKeys", 128, NULL, 2, &scanKeysHandle);
   TaskHandle_t displayKeysHandle = NULL;
   xTaskCreate(displayKeysTask, "displayKeys", 256, NULL, 1, &displayKeysHandle);
   TaskHandle_t readControlsHandle = NULL;
