@@ -416,16 +416,19 @@ void addNode(LinkedList *list, const int data)
 }
 
 uint8_t TX_Message[8] = {0};
+//To skip the call to vTaskDelayUntil() 
+//and allow the task to run multiple times without blocking, we can use a timer to trigger the task periodically
+
 
 void scanKeysTask(void *pvParameters)
 {
   const TickType_t xFrequency = 25 / portTICK_PERIOD_MS;
   TickType_t xLastWakeTime = xTaskGetTickCount();
   uint16_t prevkeys = 0;
-
-  while (1)
+  bool run_once = true;
+  while (run_once)
   {
-    vTaskDelayUntil(&xLastWakeTime, xFrequency);
+    // vTaskDelayUntil(&xLastWakeTime, xFrequency);
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
     LinkedList allKeysPressed;
     pressedKeys = 0;
@@ -453,35 +456,84 @@ void scanKeysTask(void *pvParameters)
 
     for (int i = 0; i < 12; i++)
     {
-      if (pressedKeys & (1 << i))
-      {
-        keys[i] = notes[i];
-        if (!(prevkeys & (1 << i)))
-        {
-          sendpress[i] = 1;
-          TX_Message[0] = 0x50;
-          TX_Message[1] = octaveSelect;
-          TX_Message[2] = i;
-          xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
-        }
-      }
-
-      else if (!(pressedKeys & (1 << i)))
-      { // if pressedkeys bit = 0
-        if (prevkeys & (1 << i))
-        { // if prev bit = 1
-          sendrelease[i] = 1;
-          TX_Message[0] = 0x52;
-          TX_Message[1] = octaveSelect;
-          TX_Message[2] = i;
-          xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
-        }
-      }
+      keys[i] = notes[i];
+      sendpress[i] = 1;
+      TX_Message[0] = 0x50;
+      TX_Message[1] = octaveSelect;
+      TX_Message[2] = i;
+      xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
+    
     }
 
     prevkeys = pressedKeys;
+    run_once = false;
   }
 }
+// void scanKeysTask(void *pvParameters)
+// {
+//   const TickType_t xFrequency = 25 / portTICK_PERIOD_MS;
+//   TickType_t xLastWakeTime = xTaskGetTickCount();
+//   uint16_t prevkeys = 0;
+  
+//   while (1)
+//   {
+//     vTaskDelayUntil(&xLastWakeTime, xFrequency);
+//     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
+//     LinkedList allKeysPressed;
+//     pressedKeys = 0;
+//     memset((void *)keys, 0, sizeof(keys));
+//     uint8_t sendpress[12] = {0};
+//     uint8_t sendrelease[12] = {0};
+
+//     // Read keys
+//     for (size_t row = 0; row < 3; row++)
+//     {
+//       setRow(row);
+//       delayMicroseconds(3);
+//       pressedKeys |= readCols() << (4 * row);
+//     }
+//     pressedKeys = ~pressedKeys & 0x0FFF;
+
+//     // Read knobs
+//     for (size_t row = 3; row < 5; row++)
+//     {
+//       setRow(row);
+//       delayMicroseconds(3);
+//       keyArray[row - 3] = readCols();
+//     }
+//     xSemaphoreGive(keyArrayMutex);
+
+//     for (int i = 0; i < 12; i++)
+//     {
+//       if (pressedKeys & (1 << i))
+//       {
+//         keys[i] = notes[i];
+//         if (!(prevkeys & (1 << i)))
+//         {
+//           sendpress[i] = 1;
+//           TX_Message[0] = 0x50;
+//           TX_Message[1] = octaveSelect;
+//           TX_Message[2] = i;
+//           xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
+//         }
+//       }
+
+//       else if (!(pressedKeys & (1 << i)))
+//       { // if pressedkeys bit = 0
+//         if (prevkeys & (1 << i))
+//         { // if prev bit = 1
+//           sendrelease[i] = 1;
+//           TX_Message[0] = 0x52;
+//           TX_Message[1] = octaveSelect;
+//           TX_Message[2] = i;
+//           xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
+//         }
+//       }
+//     }
+
+//     prevkeys = pressedKeys;
+//   }
+// }
 
 void octaveControl()
 {
@@ -756,7 +808,8 @@ void setup()
   CAN_RegisterTX_ISR(CAN_TX_ISR);
   CAN_Start();
   msgInQ = xQueueCreate(36, 8);                      // create queue for received messages
-  msgOutQ = xQueueCreate(36, 8);                     // create queue for transmitted messages
+  // msgOutQ = xQueueCreate(36, 8);                     // create queue for transmitted messages
+  msgOutQ = xQueueCreate(384, 8);// for testing, 12*32 =384
   CAN_TX_Semaphore = xSemaphoreCreateCounting(3, 3); // 3 slots for outgoing messages, start with 3 slots available. Max count = 3 so a 4th attempt is blocked
 
   // Create timer for audio
@@ -794,9 +847,49 @@ void setup()
       3,                   /* Task priority */
       &CAN_TX_TaskHandle); /* Pointer to store the task handle */
 
+#ifndef DISABLE_THREADS
+	xTaskCreate(displayKeysTask, "displayKeys", 256, NULL, 1, &displayKeysHandle);
+  xTaskCreate(readControlsTask, "readControls", 256, NULL, 1, &readControlsHandle);
+  xTaskCreate(
+      decodeTask,         /* Function that implements the task */
+      "decode",           /* Text name for the task */
+      256,                /* Stack size in words, not bytes */
+      NULL,               /* Parameter passed into the task */
+      4,                  /* Task priority */
+      &decodeTaskHandle); /* Pointer to store the task handle */
+  xTaskCreate(
+      CAN_TX_Task,         /* Function that implements the task */
+      "CAN_TX",            /* Text name for the task */
+      256,                 /* Stack size in words, not bytes */
+      NULL,                /* Parameter passed into the task */
+      3,                   /* Task priority */
+      &CAN_TX_TaskHandle); /* Pointer to store the task handle */
+  
+  sampleTimer->attachInterrupt(sampleISR);
+  CAN_RegisterRX_ISR(CAN_RX_ISR);
+  CAN_RegisterTX_ISR(CAN_TX_ISR);
+
+  #endif
+
+  #ifndef TEST_SCANKEYS
+      uint32_t startTime = micros();
+      for (int iter = 0; iter < 32; iter++) {
+        scanKeysTask(NULL);
+      }
+      Serial.println("Scankeys excution time:");
+      Serial.println(micros()-startTime);
+      while(1);
+  #endif
+  
   // Start the scheduler
   vTaskStartScheduler();
+
+
 }
+
+#define DISABLE_THREADS
+#define TEST_SCANKEYS
+
 
 void loop()
 {
