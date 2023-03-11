@@ -1,3 +1,4 @@
+#define TEST_SCANKEYS
 #include <Arduino.h>
 #include <U8g2lib.h>
 #include <HardwareTimer.h>
@@ -418,17 +419,21 @@ void addNode(LinkedList *list, const int data)
 
 uint8_t TX_Message[8] = {0};
 
-void scanKeysTask(void *pvParameters)
+void scanKeysTask(void *pvParameters)//time measurement for 12 keys per iteration
 {
   const TickType_t xFrequency = 25 / portTICK_PERIOD_MS;
   TickType_t xLastWakeTime = xTaskGetTickCount();
   uint16_t prevkeys = 0;
   uint8_t prevknob3 = 1;
+  bool run_once = true;
+  
+  
 
-  while (1)
+  while (run_once)
   {
-
-    vTaskDelayUntil(&xLastWakeTime, xFrequency);
+    
+    
+    // vTaskDelayUntil(&xLastWakeTime, xFrequency);
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
     LinkedList allKeysPressed;
     pressedKeys = 0;
@@ -440,130 +445,201 @@ void scanKeysTask(void *pvParameters)
     {
       setRow(row);
       delayMicroseconds(3);
-      pressedKeys |= readCols() << (4 * row);
+      // pressedKeys |= readCols() << (4 * row);
     }
-    pressedKeys = ~pressedKeys & 0x0FFF;
+    // pressedKeys = ~pressedKeys & 0x0FFF;
 
 
     //use knob3 (rightmost) to toggle send
-    setRow(5);
-    delayMicroseconds(3);
-    uint8_t knob3 = readCols();
-    bool knob3press = knob3 & 0b0010; //if =0, then pressed
-    if(!knob3press & (prevknob3!=knob3press)){
-      send = !send;
-    }
-    prevknob3 = knob3press;
+    // setRow(5);
+    // delayMicroseconds(3);
+    // uint8_t knob3 = readCols();
+    // bool knob3press = knob3 & 0b0010; //if =0, then pressed
+    // if(!knob3press & (prevknob3!=knob3press)){
+    //   send = !send;
+    // }
+    // prevknob3 = knob3press;
 
-    // Read knobs
-    for (size_t row = 3; row < 5; row++)
-    {
-      setRow(row);
-      delayMicroseconds(3);
-      keyArray[row - 3] = readCols();
-    }
+    // // Read knobs
+    // for (size_t row = 3; row < 5; row++)
+    // {
+    //   setRow(row);
+    //   delayMicroseconds(3);
+    //   keyArray[row - 3] = readCols();
+    // }
     xSemaphoreGive(keyArrayMutex);
 
-    if(send){ //only send messages if set to send
+    //only send messages if set to send
       for (int i = 0; i < 12; i++)
-      {
-        if (pressedKeys & (1 << i))
-        {
+      {        
           keys[i] = notes[i];
-          if (!(prevkeys & (1 << i)))
-          {
-            sendpress[i] = 1;
-            TX_Message[0] = 0x50;
-            TX_Message[1] = octaveSelect;
-            TX_Message[2] = i;
-            xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
-          }
+          
+          sendpress[i] = 1;
+          TX_Message[0] = 0x50;
+          TX_Message[1] = octaveSelect;
+          TX_Message[2] = i;
+          xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
+          
         }
 
-        else if (!(pressedKeys & (1 << i)))
-        { // if pressedkeys bit = 0
-          if (prevkeys & (1 << i))
-          { // if prev bit = 1
-            keys[i] = 0;
-            sendrelease[i] = 1;
-            TX_Message[0] = 0x52;
-            TX_Message[1] = octaveSelect;
-            TX_Message[2] = i;
-            xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
-          }
-        }
+      run_once = false;
       }
 
-    }
-    
-    else if(!send){ //if set to recieve mode
-      LinkedList TempList;
-      TempList.head = currentStepSizes.head;
-      TempList.tail = currentStepSizes.tail;
 
-      for(int i = 0; i < 12; i++){
-        if(pressedKeys & (1 << i)){
-          if(!(prevkeys & (1 << i))){ //if note pressed down
-            addNode(&TempList, (uint32_t)((float)stepSizes[12 * (octaveSelect - 2) + i]));
-            __atomic_store_n(&currentStepSizes.head, TempList.head, __ATOMIC_RELAXED);
-            __atomic_store_n(&currentStepSizes.tail, TempList.tail, __ATOMIC_RELAXED);  
-             keys[i] = notes[i];          
-          }
-        }
-
-        else if(!(pressedKeys & (1 << i))){
-          if(prevkeys & (1 << i)){ //if note released
-
-            Node *curr = TempList.head;
-            uint32_t stepsize = (uint32_t)((float)stepSizes[12 * (octaveSelect - 2) + i]);
-            keys[i] = 0;   
-
-            // Check 1st node
-            if (curr->data == stepsize)
-            {                             // if data in node is stepsize val for note&octave
-              TempList.head = curr->next; // set templist head(start to 2nd node)
-              free(curr);                 // free 1st node
-            }
-            else
-            {
-              
-              while (curr->next != nullptr)
-              {
-                if (curr->next->data == stepsize)
-                {                          // if data in next node is stepsize val for note&octave
-                  
-                  Node *temp = curr->next; // set temp to node to be deleted
-                  if (curr->next->next == nullptr)
-                  {                       // if node to be deleted is last node
-                    free(temp);           // free node to be deleted
-                    curr->next = nullptr; // set curr->next to null
-                    TempList.tail = curr; // set templist tail to curr
-                    break;
-                  }
-                  else
-                  {
-                    curr->next = curr->next->next; // set curr->next to node after node to be deleted
-                    free(temp);                    // free node to be deleted
-                  }
-                }
-                curr = curr->next; // move to next node
-                
-              }  
-
-            }
-            __atomic_store_n(&currentStepSizes.head, TempList.head, __ATOMIC_RELAXED);
-            __atomic_store_n(&currentStepSizes.tail, TempList.tail, __ATOMIC_RELAXED);
-
-          }
-
-        }
-
-      } 
-
-    }
     prevkeys = pressedKeys;
+  
+    
   }
-}
+
+
+
+
+// void scanKeysTask(void *pvParameters)
+// {
+//   const TickType_t xFrequency = 25 / portTICK_PERIOD_MS;
+//   TickType_t xLastWakeTime = xTaskGetTickCount();
+//   uint16_t prevkeys = 0;
+//   uint8_t prevknob3 = 1;
+
+//   while (1)
+//   {
+
+//     vTaskDelayUntil(&xLastWakeTime, xFrequency);
+//     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
+//     LinkedList allKeysPressed;
+//     pressedKeys = 0;
+//     uint8_t sendpress[12] = {0};
+//     uint8_t sendrelease[12] = {0};
+
+//     // Read keys
+//     for (size_t row = 0; row < 3; row++)
+//     {
+//       setRow(row);
+//       delayMicroseconds(3);
+//       pressedKeys |= readCols() << (4 * row);
+//     }
+//     pressedKeys = ~pressedKeys & 0x0FFF;
+
+
+//     //use knob3 (rightmost) to toggle send
+//     setRow(5);
+//     delayMicroseconds(3);
+//     uint8_t knob3 = readCols();
+//     bool knob3press = knob3 & 0b0010; //if =0, then pressed
+//     if(!knob3press & (prevknob3!=knob3press)){
+//       send = !send;
+//     }
+//     prevknob3 = knob3press;
+
+//     // Read knobs
+//     for (size_t row = 3; row < 5; row++)
+//     {
+//       setRow(row);
+//       delayMicroseconds(3);
+//       keyArray[row - 3] = readCols();
+//     }
+//     xSemaphoreGive(keyArrayMutex);
+
+//     if(send){ //only send messages if set to send
+//       for (int i = 0; i < 12; i++)
+//       {
+//         if (pressedKeys & (1 << i))
+//         {
+//           keys[i] = notes[i];
+//           if (!(prevkeys & (1 << i)))
+//           {
+//             sendpress[i] = 1;
+//             TX_Message[0] = 0x50;
+//             TX_Message[1] = octaveSelect;
+//             TX_Message[2] = i;
+//             xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
+//           }
+//         }
+
+//         else if (!(pressedKeys & (1 << i)))
+//         { // if pressedkeys bit = 0
+//           if (prevkeys & (1 << i))
+//           { // if prev bit = 1
+//             keys[i] = 0;
+//             sendrelease[i] = 1;
+//             TX_Message[0] = 0x52;
+//             TX_Message[1] = octaveSelect;
+//             TX_Message[2] = i;
+//             xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
+//           }
+//         }
+//       }
+
+//     }
+    
+//     else if(!send){ //if set to recieve mode
+//       LinkedList TempList;
+//       TempList.head = currentStepSizes.head;
+//       TempList.tail = currentStepSizes.tail;
+
+//       for(int i = 0; i < 12; i++){
+//         if(pressedKeys & (1 << i)){
+//           if(!(prevkeys & (1 << i))){ //if note pressed down
+//             addNode(&TempList, (uint32_t)((float)stepSizes[12 * (octaveSelect - 2) + i]));
+//             __atomic_store_n(&currentStepSizes.head, TempList.head, __ATOMIC_RELAXED);
+//             __atomic_store_n(&currentStepSizes.tail, TempList.tail, __ATOMIC_RELAXED);  
+//              keys[i] = notes[i];          
+//           }
+//         }
+
+//         else if(!(pressedKeys & (1 << i))){
+//           if(prevkeys & (1 << i)){ //if note released
+
+//             Node *curr = TempList.head;
+//             uint32_t stepsize = (uint32_t)((float)stepSizes[12 * (octaveSelect - 2) + i]);
+//             keys[i] = 0;   
+
+//             // Check 1st node
+//             if (curr->data == stepsize)
+//             {                             // if data in node is stepsize val for note&octave
+//               TempList.head = curr->next; // set templist head(start to 2nd node)
+//               free(curr);                 // free 1st node
+//             }
+//             else
+//             {
+              
+//               while (curr->next != nullptr)
+//               {
+//                 if (curr->next->data == stepsize)
+//                 {                          // if data in next node is stepsize val for note&octave
+                  
+//                   Node *temp = curr->next; // set temp to node to be deleted
+//                   if (curr->next->next == nullptr)
+//                   {                       // if node to be deleted is last node
+//                     free(temp);           // free node to be deleted
+//                     curr->next = nullptr; // set curr->next to null
+//                     TempList.tail = curr; // set templist tail to curr
+//                     break;
+//                   }
+//                   else
+//                   {
+//                     curr->next = curr->next->next; // set curr->next to node after node to be deleted
+//                     free(temp);                    // free node to be deleted
+//                   }
+//                 }
+//                 curr = curr->next; // move to next node
+                
+//               }  
+
+//             }
+//             __atomic_store_n(&currentStepSizes.head, TempList.head, __ATOMIC_RELAXED);
+//             __atomic_store_n(&currentStepSizes.tail, TempList.tail, __ATOMIC_RELAXED);
+
+//           }
+
+//         }
+
+//       } 
+
+//     }
+//     prevkeys = pressedKeys;
+//   }
+// }
 
 void octaveControl()
 {
@@ -863,25 +939,34 @@ void setup()
   keyArrayMutex = xSemaphoreCreateMutex();
 
   // CAN bus
-  CAN_Init(false);
+  CAN_Init(true);
   setCANFilter(0x123, 0x7ff);
-  CAN_RegisterRX_ISR(CAN_RX_ISR);
-  CAN_RegisterTX_ISR(CAN_TX_ISR);
+
   CAN_Start();
   msgInQ = xQueueCreate(36, 8);                      // create queue for received messages
-  msgOutQ = xQueueCreate(36, 8);                     // create queue for transmitted messages
+  //msgOutQ = xQueueCreate(36, 8);                     // create queue for transmitted messages
+  msgOutQ = xQueueCreate(384, 8);                    //for time measurement test 32*12 = 384
   CAN_TX_Semaphore = xSemaphoreCreateCounting(3, 3); // 3 slots for outgoing messages, start with 3 slots available. Max count = 3 so a 4th attempt is blocked
 
   // Create timer for audio
   TIM_TypeDef *Instance = TIM1;
   HardwareTimer *sampleTimer = new HardwareTimer(Instance);
   sampleTimer->setOverflow(22050, HERTZ_FORMAT);
-  sampleTimer->attachInterrupt(sampleISR);
+  
   sampleTimer->resume();
 
-  // Runs the key detection and display on separate tasks
   TaskHandle_t scanKeysHandle = NULL;
-  xTaskCreate(scanKeysTask, "scanKeys", 128, NULL, 2, &scanKeysHandle);
+  xTaskCreate(scanKeysTask, "scanKeys", 64, NULL, 1, &scanKeysHandle);
+
+
+#ifndef DISABLE_THREADS
+  CAN_RegisterRX_ISR(CAN_RX_ISR);
+  CAN_RegisterTX_ISR(CAN_TX_ISR);
+  sampleTimer->attachInterrupt(sampleISR);
+
+
+  // Runs the key detection and display on separate tasks
+
   TaskHandle_t displayKeysHandle = NULL;
   xTaskCreate(displayKeysTask, "displayKeys", 256, NULL, 1, &displayKeysHandle);
   TaskHandle_t readControlsHandle = NULL;
@@ -907,9 +992,24 @@ void setup()
       4,                   /* Task priority */
       &CAN_TX_TaskHandle); /* Pointer to store the task handle */
 
+#endif
+
+#ifdef TEST_SCANKEYS
+      uint32_t startTime = micros();
+      for (int iter = 0; iter < 32; iter++) {
+        scanKeysTask(NULL);
+      }
+      Serial.println("Scankeys excution time:");
+      Serial.println(micros()-startTime);
+      while(1);
+#endif
+
+
+
   // Start the scheduler
   vTaskStartScheduler();
 }
+
 
 void loop()
 {
