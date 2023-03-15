@@ -6,5 +6,7 @@
   
   [Lab Part 2](doc/LabPart2.md)
 
-## Additional Information
-  [Handshaking and auto-detection](doc/handshaking.md)
+## Features
+  - Waveforms: Saw, Square, Triangle, Sine
+  - Effects: Clean, Vibrato, Arpeggio 1, Arpeggio 2
+  - Control: Volume, Octave, Waveform, Effect, Pitch Bend
