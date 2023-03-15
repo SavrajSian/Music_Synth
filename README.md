@@ -10,3 +10,4 @@
   - Waveforms: Saw, Square, Triangle, Sine
   - Effects: Clean, Vibrato, Arpeggio 1, Arpeggio 2
   - Controls: Volume, Octave, Waveform, Effect, Pitch Bend
+  - Hold pressing + turning volume knob changes the CAN bus setting to SEND or RECIEVE
