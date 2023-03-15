@@ -9,4 +9,4 @@
 ## Features
   - Waveforms: Saw, Square, Triangle, Sine
   - Effects: Clean, Vibrato, Arpeggio 1, Arpeggio 2
-  - Control: Volume, Octave, Waveform, Effect, Pitch Bend
+  - Controls: Volume, Octave, Waveform, Effect, Pitch Bend
