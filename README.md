@@ -12,7 +12,7 @@ For this project, we closely followed this [specification](doc/Coursework_2_Spec
   [Lab Part 2](doc/LabPart2.md)
 
 # Table of Contents
-* [Features](./README.md##features)
+* [Features](./README.md##Features)
 
 ## Features
   - Waveforms: Saw, Square, Triangle, Sine
