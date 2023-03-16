@@ -11,8 +11,14 @@ For this project, we closely followed this [specification](doc/Coursework_2_Spec
   [Lab Part 1](doc/LabPart1.md)  
   [Lab Part 2](doc/LabPart2.md)
 
-# Table of Contents
-* [Features](./README.md##features)
+</br>
+
+## Table of content
+
+* [Features](./README.md#features)
+* [Threads](./README.md#thread)
+
+</br>
 
 ## Features
   - Waveforms: Saw, Square, Triangle, Sine
@@ -26,8 +32,8 @@ For this project, we closely followed this [specification](doc/Coursework_2_Spec
 
 ## Thread-safe
 
-## Timings table
+** Timings table **
 
-## CPU usage
+** CPU usage **
 
-## Inter-task blocking
+** Inter-task blocking  **
