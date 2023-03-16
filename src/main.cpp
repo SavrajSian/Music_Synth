@@ -594,7 +594,7 @@ void pitchControl()
   }
 
   // Vibrato
-  if (effect == 1 && pressedKeys != 0)
+  if (effect == 1 && (pressedKeys != 0 || cur_message[0] != 0 || cur_message[1] != 0))
   {
     if (vibrato < 0.8 && vibToggle == false)
     {
@@ -617,7 +617,7 @@ void pitchControl()
   }
 
   // Arpegiator 1
-  if (effect == 3 && pressedKeys != 0)
+  if (effect == 3)
   {
     if (arpegio <= 1.2)
     {
@@ -642,7 +642,7 @@ void pitchControl()
   }
 
   // Arpegiator 2
-  if (effect == 4 && pressedKeys != 0)
+  else if (effect == 4)
   {
     if (arpegio <= 1.6)
     {
@@ -671,7 +671,7 @@ void pitchControl()
     }
   }
 
-  if (pressedKeys == 0)
+  if (pressedKeys == 0 && cur_message[0] == 0 && cur_message[1] == 0)
   {
     arpegio = 0;
   }
