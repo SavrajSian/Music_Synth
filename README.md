@@ -34,4 +34,4 @@ For this project, we closely followed this [specification](doc/Coursework_2_Spec
 
 ## CPU usage
 
-## Inter-task blocking
+## Inter-Task Blocking
