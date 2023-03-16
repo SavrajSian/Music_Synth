@@ -3,14 +3,10 @@
 ## About
 This report presents the analysis findings for the Music Synthesizer Coursework, which was completed in the Spring of 2023.
 
-For this project, we closely followed this [specification](doc/Coursework_2_Specification.pdf), implementing further advanced features.
+For this project, we closely followed this [specification](doc/Coursework_2_Specification.pdf), implementing further advanced features. These lab instructions were followed to create the initial foundation of our coursework:
 
-## Lab content
-  These lab instructions were followed to create the initial foundation of our coursework.
-  
   [Lab Part 1](doc/LabPart1.md)  
   [Lab Part 2](doc/LabPart2.md)
-
 
 ## Table of content
 
