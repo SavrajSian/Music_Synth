@@ -50,7 +50,7 @@ The ```readControlsTask``` manages the user's control inputs, such as waveform s
 The ```displayKeysTask``` is responsible for updating the display with the current synthesizer settings, such as volume, octave, waveform, and effects. The task also shows the current mode (CAN mode) when applicable.
 
 - **CAN Transmitter**  
-The ```CAN_TX_Task``` handles the transmission of messages over the CAN bus. The task waits for outgoing messages in a queue and sends them over the CAN bus is a particular message format:  <br/>```[Address, Keys(1-4), Keys(5-8), Keys(9-12), Octave]```
+The ```CAN_TX_Task``` handles the transmission of messages over the CAN bus. The task waits for outgoing messages in a queue and sends them over the CAN bus is a particular message format:  <br/>```[Address, Keys(1-4), Keys(5-8), Keys(9-12), Octave]```   
 The overall message is 5 bytes long and transmits upon new keystates.
 
 - **CAN Receiver**  
