@@ -15,6 +15,7 @@ For this project, we closely followed this [specification](doc/Coursework_2_Spec
 * [Performance Table](./README.md#performance-table)
 * [Inter-Task Blocking](./README.md#inter-task-blocking)
 * [Atomicity](./README.md#atomicity)
+* [Shared-Resources](./README.md#shared-resources)
 
 ## Introduction
 The synthesizer project is an embedded application designed to create, manipulate, and output audio signals. It employs a combination of hardware and software components to achieve a versatile and user-friendly experience. The synthesizer includes a range of features such as multiple waveforms, effects, volume control, and octave selection. Additionally, the project utilises CAN bus communication for data transmission and reception, enabling multiple synths to link together to form a larger keyboard.
@@ -76,13 +77,13 @@ The ```decodeTask``` is responsible for decoding incoming CAN bus messages. It p
 
 ## Performance table
 
-| Thread Handle     | Average Iteration Time | Assigned Iteration Time | CPU Usage |
-|-------------------|------------------------|-------------------------|-----------|
-| ```scanKeysHandle```    |                        |                         |           |
-| ```readControlsHandle```|                        |                         |           |
-| ```displayKeysHandle``` |                        |                         |           |
-| ```decodeTaskHandle```  |                        |                         |           |
-| ```CAN_TX_TaskHandle``` |                        |                         |           |
+| Thread Handle           | Priority | Average Iteration Time | Assigned Iteration Time | CPU Usage |
+|-------------------------|----------|------------------------|-------------------------|-----------|
+| ```scanKeysHandle```    |    2     |                        | 20                      |           |
+| ```readControlsHandle```|    1     |                        | 20                      |           |
+| ```displayKeysHandle``` |    1     |                        | 100                     |           |
+| ```decodeTaskHandle```  |    4     |                        | None                    |           |
+| ```CAN_TX_TaskHandle``` |    3     |                        | None                    |           |
 
 ## Inter-Task Blocking
 Multiple tasks run concurrently to achieve various functionalities. It is essential to manage the shared resources and communication between tasks to ensure the proper functioning of the system. Inter-task blocking can occur when one task must wait for another task to complete a specific operation, which could potentially lead to delays or even deadlocks. To avoid such issues, the following measures have been taken into account:
@@ -107,3 +108,15 @@ A counting semaphore is used for managing the availability of resources, particu
  ## Atomicity
  
 In the synthesizer code, __atomic_store_n was used to update shared data such as control settings and copying the local copy of the current step size linked list to the global linked list. By using this function, the code guarantees that other threads will not access the data while it is being updated, ensuring data consistency.
+
+
+ ## Shared Resources
+ 
+- **Lookup table for sine wave generation (```sinTable```)**  
+The sinTable is a precomputed lookup table used for generating sine waves. It is a global resource that can be accessed by any part of the code that needs to generate sine waves.
+
+- **Key array and octave data (```keyArray, octaveRX```)**  
+The``` keyArray``` and ```octaveRX``` arrays store the current state of the synthesizer's keys and octaves. These arrays are shared between multiple tasks, such as ```scanKeysTask```, ```readControlsTask```, and ```decodeTask```. To ensure data consistency, a mutex (```keyArrayMutex```) is used to synchronise access to these shared resources.
+
+- **Display variables (```showCAN, volume, octaveSelect, waveform, effect, canMode, canModes, effects, waves, keys```)**  
+These variables are shared between the ```displayKeysTask``` and ```readControlsTask``` for displaying information on the screen. Care should be taken to avoid race conditions or inconsistent updates when modifying these variables in multiple tasks.
