@@ -85,18 +85,18 @@ The ```decodeTask``` is responsible for decoding incoming CAN bus messages. It p
 ## Inter-Task Blocking
 Multiple tasks run concurrently to achieve various functionalities. It is essential to manage the shared resources and communication between tasks to ensure the proper functioning of the system. Inter-task blocking can occur when one task must wait for another task to complete a specific operation, which could potentially lead to delays or even deadlocks. To avoid such issues, the following measures have been taken into account:
 
-- **Mutex Usage**
+- **Mutex Usage**  
 Mutexes have been employed in the system to protect shared resources from simultaneous access. The mutex allows only one task to access a shared resource at a time. In our synthesizer system, the ```keyArrayMutex``` is used to protect the ```keyArray``` from simultaneous access by multiple tasks. Tasks that access the ```keyArray``` must first take the mutex using ```xSemaphoreTake(keyArrayMutex, portMAX_DELAY)```. <br>
 This ensures that only one task can access the shared resource at a time. Once the task has finished using the shared resource, it must release the mutex using ```xSemaphoreGive(keyArrayMutex)```.  
 
 
-- **Queues**
+- **Queues**  
 Queues are used for inter-task communication, providing a means to send and receive messages between tasks. In the system, two queues have been employed for CAN bus communication, msgInQ and msgOutQ. These queues store incoming and outgoing CAN bus messages:  ```msgInQ = xQueueCreate(36, 8)``` & ```  msgOutQ = xQueueCreate(36, 8)```.
 
   By using queues, tasks can send and receive messages without blocking each other, as they are decoupled from the sending and receiving process. When a task needs to send or receive a message, it can do so without waiting for the other tasks to complete their operations.
 
 
-- **Counting Semaphores**
+- **Counting Semaphores**  
 A counting semaphore is used for managing the availability of resources, particularly in the CAN bus communication. In this system, the ```CAN_TX_Semaphore``` counting semaphore is employed to manage the available slots for outgoing messages on the CAN bus: ```CAN_TX_Semaphore = xSemaphoreCreateCounting(3, 3)```<br>
 
 
