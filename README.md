@@ -15,8 +15,8 @@ For this project, we closely followed this [specification](doc/Coursework_2_Spec
 * [Performance Table](./README.md#performance-table)
 * [Inter-Task Blocking](./README.md#inter-task-blocking)
 * [Atomicity](./README.md#atomicity)
-* [Shared-Resources](./README.md#shared-resources)
-
+* [Shared Resources](./README.md#shared-resources)
+* [Task Dependencies](./README.md#task-dependencies)
 ## Introduction
 The synthesizer project is an embedded application designed to create, manipulate, and output audio signals. It employs a combination of hardware and software components to achieve a versatile and user-friendly experience. The synthesizer includes a range of features such as multiple waveforms, effects, volume control, and octave selection. Additionally, the project utilises CAN bus communication for data transmission and reception, enabling multiple synths to link together to form a larger keyboard.
 
@@ -120,3 +120,23 @@ The``` keyArray``` and ```octaveRX``` arrays store the current state of the synt
 
 - **Display variables (```showCAN, volume, octaveSelect, waveform, effect, canMode, canModes, effects, waves, keys```)**  
 These variables are shared between the ```displayKeysTask``` and ```readControlsTask``` for displaying information on the screen. Care should be taken to avoid race conditions or inconsistent updates when modifying these variables in multiple tasks.
+
+
+## Task Dependencies
+There are several tasks with dependencies between them. Identifying these dependencies is crucial to ensure correct task execution and to prevent potential issues arising from inter-task communication. Here, we discuss the dependencies between the tasks:
+
+- ```scanKeysTask``` **and** ```decodeTask```  
+  The scanKeysTask is responsible for scanning the keyboard and updating the ```keyArray``` with the current state of the keys. The ```decodeTask```, on the other hand, processes the incoming CAN messages and updates the ```keyArray``` and ```octaveRX``` accordingly. These two tasks are dependent on each other since they both modify the shared ```keyArray``` and ```octaveRX``` resources. This dependency is managed using the ```keyArrayMutex``` to synchronise access to the shared resources.
+
+
+- ```readControlsTask``` **and** ```displayKeysTask```  
+The ```readControlsTask``` is responsible for reading the control inputs, such as knobs and buttons, and updating the shared display variables (```showCAN, volume, octaveSelect, waveform, effect, canMode```). The ```displayKeysTask``` is dependent on the ```readControlsTask``` since it reads these shared variables to display the information on the screen. To ensure data consistency and prevent race conditions, care should be taken when updating the shared display variables in both tasks.
+
+
+- ```CAN_RX_ISR``` **and** ```decodeTask```  
+The ```CAN_RX_ISR``` function is an interrupt service routine that is triggered when a new CAN message is received. It places the received message in the ```msgInQ``` queue. The ```decodeTask``` is dependent on the ```CAN_RX_ISR``` as it waits for messages in the ```msgInQ``` queue to process them. This dependency is managed using the *FreeRTOS* queue mechanism, which provides a way for tasks to wait for new messages without consuming CPU resources unnecessarily.
+
+
+- ```CAN_TX_Task``` **and** ```CAN_TX_ISR```  
+The ```CAN_TX_Task``` is responsible for transmitting CAN messages by dequeuing messages from the ```msgOutQ``` queue and sending them over the CAN bus. The ```CAN_TX_ISR``` function is an interrupt service routine triggered when a CAN message has been transmitted. This ISR gives a semaphore to indicate that the transmission is complete. The ```CAN_TX_Task``` is dependent on the ```CAN_TX_ISR``` to know when it can send the next message. This dependency is managed using the *FreeRTOS* semaphore mechanism, which provides a way to synchronise the execution of these tasks.
+
