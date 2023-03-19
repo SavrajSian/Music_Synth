@@ -40,20 +40,20 @@ The synthesizer project is an embedded application designed to create, manipulat
 ## Threads
 The synthesizer utilises a real-time operating system (RTOS) to manage its tasks efficiently. The RTOS allows for concurrent execution of multiple tasks, ensuring a responsive user experience. This report outlines the primary threading tasks implemented in the synthesizer, along with relevant code snippets.
 
-- **Key Scanning**
+- **Key Scanning**  
 The ```scanKeysTask``` is responsible for scanning the 12-key input system and updating the key states accordingly. This task ensures that user inputs are processed in real-time and sent to the audio generation system.
 
-- **Control Reading**
+- **Control Reading**  
 The ```readControlsTask``` manages the user's control inputs, such as waveform selection, effects, volume, and octave control. This task reads the user's input from knobs and a joystick, and updates the respective parameters accordingly.
 
-- **Display**
+- **Display**  
 The ```displayKeysTask``` is responsible for updating the display with the current synthesizer settings, such as volume, octave, waveform, and effects. The task also shows the current mode (CAN mode) when applicable.
 
-- **CAN Transmitter**
+- **CAN Transmitter**  
 The ```CAN_TX_Task``` handles the transmission of messages over the CAN bus. The task waits for outgoing messages in a queue and sends them over the CAN bus is a particular message format:  <br/>```[Address, Keys(1-4), Keys(5-8), Keys(9-12), Octave]```
 The overall message is 5 bytes long and transmits upon new keystates.
 
-- **CAN Receiver**
+- **CAN Receiver**  
 The ```decodeTask``` is responsible for decoding incoming CAN bus messages. It processes the received messages, updating the keyboard array and octave settings accordingly.
 
 ## Performance table
