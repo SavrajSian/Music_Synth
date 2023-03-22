@@ -6,6 +6,9 @@
 #include <vector>
 #include <ES_CAN.h>
 
+// Macro to enable/disable testing
+#define ENABLE_TESTING 0
+
 // Calculate step sizes and frequencies during compilation
 constexpr uint32_t samplingFreq = 22050;                  // Hz
 constexpr double twelfthRootOfTwo = pow(2.0, 1.0 / 12.0); // 12th root of 2
@@ -537,9 +540,12 @@ void scanKeysTask(void *pvParameters)
   const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
   TickType_t xLastWakeTime = xTaskGetTickCount();
   LinkedList oldtodelete;
+
   while (1)
   {
-    vTaskDelayUntil(&xLastWakeTime, xFrequency);
+  #if ENABLE_TESTING == 0
+      vTaskDelayUntil(&xLastWakeTime, xFrequency);
+  #endif
     LinkedList locallist;
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
     pressedKeys = 0;
@@ -595,27 +601,21 @@ void scanKeysTask(void *pvParameters)
       }
     }
 
-    // Read knobs
-    for (size_t row = 3; row < 7; row++)
-    {
-      setRow(row);
-      delayMicroseconds(3);
-      keyArray[row - 3] = readCols();
-    }
-
     xSemaphoreGive(keyArrayMutex);
 
     // Send keys to sampler
     __atomic_store_n(&currentStepSizes.head, locallist.head, __ATOMIC_RELAXED);
-    __atomic_store_n(&currentStepSizes.tail, locallist.tail, __ATOMIC_RELAXED); //in here for completeness, but not needed. If interrupt between head/tail, doesnt matter because head points to whole list
-    //delete old linked list
+    __atomic_store_n(&currentStepSizes.tail, locallist.tail, __ATOMIC_RELAXED); // in here for completeness, but not needed. If interrupt between head/tail, doesnt matter because head points to whole list
+
+    // Delete old linked list
     deleteLinkedList(&oldtodelete);
-    // printList(&allKeysPressed);
-    //store current local as old for next iteration for deletion
     __atomic_store_n(&oldtodelete.head, locallist.head, __ATOMIC_RELAXED);
     __atomic_store_n(&oldtodelete.tail, locallist.tail, __ATOMIC_RELAXED);
-    
-    
+    // printList(&allKeysPressed);
+
+  #if ENABLE_TESTING == 1
+      break;
+  #endif
   }
 }
 
@@ -762,7 +762,17 @@ void readControlsTask(void *pvParameters)
 
   while (1)
   {
-    vTaskDelayUntil(&xLastWakeTime, xFrequency);
+  #if ENABLE_TESTING == 0
+      vTaskDelayUntil(&xLastWakeTime, xFrequency);
+  #endif
+
+    // Read knobs
+    for (size_t row = 3; row < 7; row++)
+    {
+      setRow(row);
+      delayMicroseconds(3);
+      keyArray[row - 3] = readCols();
+    }
 
     functionKnob.update(keyArray[1] & 0x03); // KNOB 0       ( 0 )    ( 1 )    ( 2 )    ( 3 )
     effectKnob.update(keyArray[0] >> 2);     // KNOB 1      [4]>>2  [4]&0x03  [3]>>2  [3]&0x03
@@ -811,6 +821,10 @@ void readControlsTask(void *pvParameters)
 
     octaveControl();
     pitchControl();
+
+  #if ENABLE_TESTING == 1
+      break;
+  #endif
   }
 }
 
@@ -821,7 +835,9 @@ void displayKeysTask(void *pvParameters)
 
   while (1)
   {
-    vTaskDelayUntil(&xLastWakeTime, xFrequency);
+  #if ENABLE_TESTING == 0
+      vTaskDelayUntil(&xLastWakeTime, xFrequency);
+  #endif
     u8g2.setFont(u8g2_font_profont10_tf);
     u8g2.clearBuffer();
 
@@ -894,6 +910,10 @@ void displayKeysTask(void *pvParameters)
       u8g2.sendBuffer();
     }
     digitalToggle(LED_BUILTIN);
+
+  #if ENABLE_TESTING == 1
+      break;
+  #endif
   }
 }
 
@@ -926,7 +946,9 @@ void decodeTask(void *pVparameters)
 {
   while (1)
   {
-    xQueueReceive(msgInQ, RX_Message, portMAX_DELAY); // wait for message
+  #if ENABLE_TESTING == 0
+      xQueueReceive(msgInQ, RX_Message, portMAX_DELAY); // wait for message
+  #endif
 
     cur_message[RX_Message[0]] = 0;
     // Create the  keyboard array
@@ -937,7 +959,11 @@ void decodeTask(void *pVparameters)
     cur_message[RX_Message[0]] |= RX_Message[3];
     // Set the keyboard octave
     octaveRX[RX_Message[0]] = RX_Message[4];
-    Serial.println(cur_message[0]);
+    // Serial.println(cur_message[0]);
+
+  #if ENABLE_TESTING == 1
+      break;
+  #endif
   }
 }
 
@@ -996,38 +1022,79 @@ void setup()
   sampleTimer->attachInterrupt(sampleISR);
   sampleTimer->resume();
 
-  // Runs the key detection and display on separate tasks
-  TaskHandle_t scanKeysHandle = NULL;
-  xTaskCreate(scanKeysTask, "scanKeys", 64, NULL, 5, &scanKeysHandle);
-  TaskHandle_t displayKeysHandle = NULL;
-  xTaskCreate(displayKeysTask, "displayKeys", 256, NULL, 1, &displayKeysHandle);
-  TaskHandle_t readControlsHandle = NULL;
-  xTaskCreate(readControlsTask, "readControls", 256, NULL, 4, &readControlsHandle);
+  #if ENABLE_TESTING == 0
+    TaskHandle_t scanKeysHandle = NULL;
+    xTaskCreate(scanKeysTask, "scanKeys", 64, NULL, 5, &scanKeysHandle);
+    TaskHandle_t displayKeysHandle = NULL;
+    xTaskCreate(displayKeysTask, "displayKeys", 256, NULL, 1, &displayKeysHandle);
+    TaskHandle_t readControlsHandle = NULL;
+    xTaskCreate(readControlsTask, "readControls", 256, NULL, 4, &readControlsHandle);
+    TaskHandle_t decodeTaskHandle = NULL;
+    xTaskCreate(decodeTask, "decode", 256, NULL, 2, &decodeTaskHandle);
+    TaskHandle_t CAN_TX_TaskHandle = NULL;
+    xTaskCreate(CAN_TX_Task, "CAN_TX", 256, NULL, 3, &CAN_TX_TaskHandle);
+  #endif
 
-  // setup threading for decoding messages
-  TaskHandle_t decodeTaskHandle = NULL;
-  xTaskCreate(
-      decodeTask,         /* Function that implements the task */
-      "decode",           /* Text name for the task */
-      256,                /* Stack size in words, not bytes */
-      NULL,               /* Parameter passed into the task */
-      2,                  /* Task priority */
-      &decodeTaskHandle); /* Pointer to store the task handle */
+  #if ENABLE_TESTING == 1
 
-  // setup threading for sending messages
-  TaskHandle_t CAN_TX_TaskHandle = NULL;
-  xTaskCreate(
-      CAN_TX_Task,         /* Function that implements the task */
-      "CAN_TX",            /* Text name for the task */
-      256,                 /* Stack size in words, not bytes */
-      NULL,                /* Parameter passed into the task */
-      3,                   /* Task priority */
-      &CAN_TX_TaskHandle); /* Pointer to store the task handle */
+    Serial.println("-=-=-=-=-=-=-=-=-=-=-=-=-=-");
+    uint32_t startTime = micros();
+    uint32_t finishTime = 0;
+    for (int iter = 0; iter < 64; iter++)
+    {
+      scanKeysTask(NULL);
+    }
+    finishTime = micros() - startTime;
+    Serial.print("scanKeysTask:\t\t");
+    Serial.print(finishTime / 64);
+    Serial.print("\tmicros / iter");
+    Serial.print("\tCPU: ");
+    Serial.print(finishTime / 20000);
+    Serial.println("%");
+
+    startTime = micros();
+    for (int iter = 0; iter < 64; iter++)
+    {
+      displayKeysTask(NULL);
+    }
+    finishTime = micros() - startTime;
+    Serial.print("displayKeysTask:\t");
+    Serial.print(finishTime / 64);
+    Serial.print("\tmicros / iter");
+    Serial.print("\tCPU: ");
+    Serial.print(finishTime / 100000);
+    Serial.println("%");
+
+    startTime = micros();
+    for (int iter = 0; iter < 64; iter++)
+    {
+      readControlsTask(NULL);
+    }
+    finishTime = micros() - startTime;
+    Serial.print("readControlsTask:\t");
+    Serial.print(finishTime / 64);
+    Serial.print("\tmicros / iter");
+    Serial.print("\tCPU: ");
+    Serial.print(finishTime / 20000);
+    Serial.println("%");
+
+    startTime = micros();
+    for (int iter = 0; iter < 64; iter++)
+    {
+      decodeTask(NULL);
+    }
+    finishTime = micros() - startTime;
+    Serial.print("decodeTask:\t\t");
+    Serial.print(finishTime / 64);
+    Serial.print("\tmicros / iter");
+    Serial.print("\tCPU: ");
+    Serial.print(finishTime / 100000);
+    Serial.println("%");
+  #endif
 
   vTaskStartScheduler();
 }
 
 void loop()
 {
-  delay(100);
 }
