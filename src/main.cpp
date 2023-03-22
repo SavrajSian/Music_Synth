@@ -536,12 +536,11 @@ void scanKeysTask(void *pvParameters)
 {
   const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
   TickType_t xLastWakeTime = xTaskGetTickCount();
-  LinkedList allKeysPressed;
-
+  LinkedList oldtodelete;
   while (1)
   {
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
-    deleteLinkedList(&allKeysPressed);
+    LinkedList locallist;
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
     pressedKeys = 0;
 
@@ -558,19 +557,19 @@ void scanKeysTask(void *pvParameters)
     if (canMode == 0)
     {
       // Process local keys
-      processKeyPress(&allKeysPressed, pressedKeys, octaveSelect, true);
+      processKeyPress(&locallist, pressedKeys, octaveSelect, true);
 
       // Process received keys
       for (int j = 0; j < 2; j++)
       {
         if (prev_message[j] != cur_message[j])
         { // NEW KEY STATE
-          processKeyPress(&allKeysPressed, cur_message[j], octaveRX[j], false);
+          processKeyPress(&locallist, cur_message[j], octaveRX[j], false);
           prev_message[j] = cur_message[j];
         }
         else
         { // REPEAT OLD KEY STATE
-          processKeyPress(&allKeysPressed, prev_message[j], octaveRX[j], false);
+          processKeyPress(&locallist, prev_message[j], octaveRX[j], false);
         }
       }
     }
@@ -607,9 +606,16 @@ void scanKeysTask(void *pvParameters)
     xSemaphoreGive(keyArrayMutex);
 
     // Send keys to sampler
-    __atomic_store_n(&currentStepSizes.head, allKeysPressed.head, __ATOMIC_RELAXED);
-    __atomic_store_n(&currentStepSizes.tail, allKeysPressed.tail, __ATOMIC_RELAXED);
+    __atomic_store_n(&currentStepSizes.head, locallist.head, __ATOMIC_RELAXED);
+    __atomic_store_n(&currentStepSizes.tail, locallist.tail, __ATOMIC_RELAXED); //in here for completeness, but not needed. If interrupt between head/tail, doesnt matter because head points to whole list
+    //delete old linked list
+    deleteLinkedList(&oldtodelete);
     // printList(&allKeysPressed);
+    //store current local as old for next iteration for deletion
+    __atomic_store_n(&oldtodelete.head, locallist.head, __ATOMIC_RELAXED);
+    __atomic_store_n(&oldtodelete.tail, locallist.tail, __ATOMIC_RELAXED);
+    
+    
   }
 }
 
