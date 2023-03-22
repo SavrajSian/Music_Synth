@@ -164,4 +164,6 @@ The ```CAN_RX_ISR``` function is an interrupt service routine that is triggered 
 - ```CAN_TX_Task``` **and** ```CAN_TX_ISR```  
 The ```CAN_TX_Task``` is responsible for transmitting CAN messages by dequeuing messages from the ```msgOutQ``` queue and sending them over the CAN bus. The ```CAN_TX_ISR``` function is an interrupt service routine triggered when a CAN message has been transmitted. This ISR gives a semaphore to indicate that the transmission is complete. The ```CAN_TX_Task``` is dependent on the ```CAN_TX_ISR``` to know when it can send the next message. This dependency is managed using the *FreeRTOS* semaphore mechanism, which provides a way to synchronise the execution of these tasks.
 
+Here is the dependency graph of the tasks:
+
 ![Dependency Graph](/Dependency%20Graph.png)
