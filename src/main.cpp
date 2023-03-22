@@ -998,11 +998,11 @@ void setup()
 
   // Runs the key detection and display on separate tasks
   TaskHandle_t scanKeysHandle = NULL;
-  xTaskCreate(scanKeysTask, "scanKeys", 64, NULL, 2, &scanKeysHandle);
+  xTaskCreate(scanKeysTask, "scanKeys", 64, NULL, 5, &scanKeysHandle);
   TaskHandle_t displayKeysHandle = NULL;
   xTaskCreate(displayKeysTask, "displayKeys", 256, NULL, 1, &displayKeysHandle);
   TaskHandle_t readControlsHandle = NULL;
-  xTaskCreate(readControlsTask, "readControls", 256, NULL, 1, &readControlsHandle);
+  xTaskCreate(readControlsTask, "readControls", 256, NULL, 4, &readControlsHandle);
 
   // setup threading for decoding messages
   TaskHandle_t decodeTaskHandle = NULL;
@@ -1011,7 +1011,7 @@ void setup()
       "decode",           /* Text name for the task */
       256,                /* Stack size in words, not bytes */
       NULL,               /* Parameter passed into the task */
-      4,                  /* Task priority */
+      2,                  /* Task priority */
       &decodeTaskHandle); /* Pointer to store the task handle */
 
   // setup threading for sending messages
