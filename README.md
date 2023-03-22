@@ -130,8 +130,7 @@ A counting semaphore is used for managing the availability of resources, particu
   
  ## Atomicity
  
-In the synthesizer code, ```__atomic_store_n``` was used to update shared data such as control settings and copying the local copy of the current step size linked list to the global linked list. By using this function, the code guarantees that other threads will not access the data while it is being updated, ensuring data consistency. 
-
+In the synthesizer code, ```__atomic_store_n``` was used to update shared data such as control settings. By using this function, the code guarantees that other threads will not access the data while it is being updated, ensuring data consistency. For example, in the ```scanKeysTask```, a local linked list of notes is created, and the head of this list is written to the variable used by ```sampleISR``` atomically so that it is not possible for there to be an alteration of the list that ```sampleISR``` is using. The memory used by the old linked list is then freed to stop memory leaks and stop the stack size for the task being exceeded.
 
  ## Shared Resources
  
