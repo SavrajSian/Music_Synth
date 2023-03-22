@@ -126,7 +126,11 @@ volatile LinkedList currentStepSizes;
 const char *notes[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 const char *keys[12] = {};
 const char *waves[4] = {"Saw", "Square", "Triangle", "Sine"};
-const char *effects[5] = {"Clean", "Vibrato", "Octave", "Arpegio 1", "Arpegio 2"};
+const char *effects[6] = {"Clean", "Vibrato", "Octave", "Arpegio 1", "Arpegio 2", "Chord"};
+const char *vib[3] = {"Low", "Medium", "High"};
+const char *octaveModes[3] = {"Dual", "Pos", "Neg"};
+const char *arpeggioModes[3] = {"Low", "Medium", "High"};
+const char *chords[5] = {"Major", "Minor", "Diminished", "Augmented", "Seventh"};
 const char *canModes[3] = {"Master", "Send 1", "Send 2"};
 
 volatile int32_t sample = 0;
@@ -144,18 +148,15 @@ volatile uint32_t cur_message[2] = {0, 0};
 volatile int octaveRX[2] = {0, 0};
 
 // Knob Variables
-volatile int volume = 6;
-volatile int waveform = 0;
-volatile int effect = 0;
-volatile int effectVal = 1;
-volatile int canMode = 0;
-volatile bool showCAN = 0;
+volatile int volume{6}, waveform{0}, effect{0}, subEffect{0}, effectVal{1}, canMode{0}, vibratoEffect{0}, arp1Effect{0}, arp2Effect{0};
+volatile bool showCAN{false};
 
 // Octave Settings
 volatile int octaveSelect = 4;
 const int MIN_OCT = 2;
 const int MAX_OCT = 8;
 volatile bool OctToggle = false;
+volatile int octaveMode = 0;
 
 // Pitch Bend
 volatile float pitchBend = 1;
@@ -164,7 +165,17 @@ volatile float vibrato = 0;
 volatile bool vibToggle = false;
 volatile float arpegio = 0;
 volatile bool arpToggle = false;
+volatile float vibratoMulti[3] = {0.03, 0.06, 0.08};
+volatile float arpeggio1Multi[3][3] = {{0.6, 1.2, 1.8}, {0.4, 0.8, 1.2}, {0.2, 0.6, 1.0}};
+volatile float arpeggio2Multi[3][4] = {{0.6, 1.2, 1.8, 2.2}, {0.4, 0.8, 1.2, 1.6}, {0.2, 0.6, 1.0, 1.4}};
 
+// Chords
+volatile int intervalMajor[2] = {4, 7};
+volatile int intervalMinor[2] = {3, 7};
+volatile int intervalDiminished[2] = {3, 6};
+volatile int intervalAugmented[2] = {4, 8};
+volatile int intervalSeventh[3] = {4, 7, 11};
+volatile int chordNotes[3];
 // Pin definitions
 // Row select and enable
 const int RA0_PIN = D3;
@@ -449,6 +460,35 @@ void deleteLinkedList(LinkedList *list)
   list->tail = nullptr;
 }
 
+void playChord(int chordType, int octave, int i, LinkedList *list)
+{
+  if (chordType == 0)
+  {
+    addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 4] * pitchBend));
+    addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 7] * pitchBend));
+  }
+  if (chordType == 1)
+  {
+    addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 3] * pitchBend));
+    addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 7] * pitchBend));
+  }
+  if (chordType == 2)
+  {
+    addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 3] * pitchBend));
+    addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 6] * pitchBend));
+  }
+  if (chordType == 3)
+  {
+    addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 4] * pitchBend));
+    addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 8] * pitchBend));
+  }
+  if (chordType == 4)
+  {
+    addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 4] * pitchBend));
+    addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 7] * pitchBend));
+    addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 11] * pitchBend));
+  }
+}
 // Helper function to add keypress to linked list for sampler use
 void processKeyPress(LinkedList *list, uint16_t keyState, int octave, bool master)
 {
@@ -460,8 +500,26 @@ void processKeyPress(LinkedList *list, uint16_t keyState, int octave, bool maste
       keys[i] = notes[i];
       if (effect == 2)
       {
-        addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 3) + i] * pitchBend));
-        addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 1) + i] * pitchBend));
+        // +- 1 Octave
+        if (octaveMode == 0)
+        {
+          addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 3) + i] * pitchBend));
+          addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 1) + i] * pitchBend));
+        }
+        // +1 Octave
+        else if (octaveMode == 1)
+        {
+          addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 1) + i] * pitchBend));
+        }
+        // -1 Octave
+        else
+        {
+          addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 3) + i] * pitchBend));
+        }
+      }
+      else if (effect == 5)
+      {
+        playChord(subEffect, octave, i, list);
       }
     }
     else
@@ -596,18 +654,18 @@ void pitchControl()
   // Vibrato
   if (effect == 1 && (pressedKeys != 0 || cur_message[0] != 0 || cur_message[1] != 0))
   {
-    if (vibrato < 0.8 && vibToggle == false)
+    if (vibrato < vibratoMulti[vibratoEffect] && vibToggle == false)
     {
-      vibrato += 0.04;
+      vibrato += 0.01;
       pitchBend = 1 + vibrato;
-      if (vibrato >= 0.1)
+      if (vibrato >= vibratoMulti[vibratoEffect])
       {
         vibToggle = true;
       }
     }
     if (vibToggle == true)
     {
-      vibrato -= 0.02;
+      vibrato -= 0.01;
       pitchBend = 1 + vibrato;
       if (vibrato <= 0)
       {
@@ -619,14 +677,14 @@ void pitchControl()
   // Arpegiator 1
   if (effect == 3)
   {
-    if (arpegio <= 1.2)
+    if (arpegio <= arpeggio1Multi[arp1Effect][2])
     {
       arpegio += 0.05;
-      if (arpegio > 0.8)
+      if (arpegio > arpeggio1Multi[arp1Effect][1])
       {
         pitchBend = 1.5;
       }
-      else if (arpegio > 0.4)
+      else if (arpegio > arpeggio1Multi[arp1Effect][0])
       {
         pitchBend = 1.25;
       }
@@ -634,7 +692,7 @@ void pitchControl()
       {
         pitchBend = 1;
       }
-      if (arpegio >= 1.2)
+      if (arpegio >= arpeggio1Multi[arp1Effect][2])
       {
         arpegio = 0;
       }
@@ -644,18 +702,18 @@ void pitchControl()
   // Arpegiator 2
   else if (effect == 4)
   {
-    if (arpegio <= 1.6)
+    if (arpegio <= arpeggio2Multi[arp2Effect][3])
     {
       arpegio += 0.05;
-      if (arpegio > 1.2)
+      if (arpegio > arpeggio2Multi[arp2Effect][2])
       {
         pitchBend = 1.5;
       }
-      else if (arpegio > 0.8)
+      else if (arpegio > arpeggio2Multi[arp2Effect][1])
       {
         pitchBend = 1.25;
       }
-      else if (arpegio > 0.4)
+      else if (arpegio > arpeggio2Multi[arp2Effect][0])
       {
         pitchBend = 1.5;
       }
@@ -664,7 +722,7 @@ void pitchControl()
         pitchBend = 1;
       }
 
-      if (arpegio >= 1.6)
+      if (arpegio >= arpeggio2Multi[arp2Effect][3])
       {
         arpegio = 0;
       }
@@ -685,9 +743,13 @@ void readControlsTask(void *pvParameters)
   // Knob Constructors
   Knob volumeKnob(0, 8, &volume);
   Knob functionKnob(0, 3, &waveform);
-  Knob effectKnob(0, 4, &effect);
+  Knob effectKnob(0, 5, &effect);
+  Knob subEffectKnob(0, 4, &subEffect);
   Knob canKnob(0, 2, &canMode);
-
+  Knob vibratoFXKnob(0, 2, &vibratoEffect);
+  Knob octaveFXKnob(0, 2, &octaveMode);
+  Knob arp1FXKnob(0, 2, &arp1Effect);
+  Knob arp2FXKnob(0, 2, &arp2Effect);
   // Calculate the zero error (stick drift)
   float initialY = analogRead(A1);
   calZero = (initialY / 1023);
@@ -698,6 +760,27 @@ void readControlsTask(void *pvParameters)
 
     functionKnob.update(keyArray[1] & 0x03); // KNOB 0       ( 0 )    ( 1 )    ( 2 )    ( 3 )
     effectKnob.update(keyArray[0] >> 2);     // KNOB 1      [4]>>2  [4]&0x03  [3]>>2  [3]&0x03
+
+    if (effect == 1)
+    {
+      vibratoFXKnob.update(keyArray[0] & 0x03);
+    }
+    else if (effect == 2)
+    {
+      octaveFXKnob.update(keyArray[0] & 0x03);
+    }
+    else if (effect == 3)
+    {
+      arp1FXKnob.update(keyArray[0] & 0x03);
+    }
+    else if (effect == 4)
+    {
+      arp2FXKnob.update(keyArray[0] & 0x03);
+    }
+    else if (effect == 5)
+    {
+      subEffectKnob.update(keyArray[0] & 0x03);
+    }
 
     // Update Knobs
     // Not pressed
@@ -753,6 +836,37 @@ void displayKeysTask(void *pvParameters)
       u8g2.setCursor(2, 30);
       u8g2.print("FX:");
       u8g2.print(effects[effect]);
+
+      if (effect == 5)
+      {
+        u8g2.setCursor(50, 30);
+        u8g2.print("-> ");
+        u8g2.print(chords[subEffect]);
+      }
+      else if (effect == 1)
+      {
+        u8g2.setCursor(54, 30);
+        u8g2.print("-> ");
+        u8g2.print(vib[vibratoEffect]);
+      }
+      else if (effect == 2)
+      {
+        u8g2.setCursor(50, 30);
+        u8g2.print("-> ");
+        u8g2.print(octaveModes[octaveMode]);
+      }
+      else if (effect == 3)
+      {
+        u8g2.setCursor(64, 30);
+        u8g2.print("-> ");
+        u8g2.print(arpeggioModes[arp1Effect]);
+      }
+      else if (effect == 4)
+      {
+        u8g2.setCursor(64, 30);
+        u8g2.print("-> ");
+        u8g2.print(arpeggioModes[arp2Effect]);
+      }
 
       u8g2.setCursor(2, 10);
       u8g2.print("KEY: ");
