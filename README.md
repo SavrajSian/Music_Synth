@@ -88,6 +88,26 @@ The ```decodeTask``` is responsible for decoding incoming CAN bus messages. It p
 | ```decodeTaskHandle```  |    4     |                        | None                    |           |
 | ```CAN_TX_TaskHandle``` |    3     |                        | None                    |           |
 
+
+
+Metrics for analysis:
+•Initiation: A new iteration of a task
+•Initiation interval (τ): time between initiations of a particular task
+•Deadline: time by which the task must be complete –often assumed to be the same as τ
+•Execution time (T): CPU time needed to complete a task if it is not interrupted
+•Latency: time actually taken to complete a task•Pre-emption: the interruption of a task by one with higher priority
+•Utilisation: the proportion of time that the CPU is busy
+
+Tasks with shortest initiation intervals should have higher priority, so the ones with the longer intervals have time to be completed if they are interrupted.
+
+Critical instant analysis:
+Consider the latency, Ln, of the lowest-priority task, tn, at the worst-case instant in time
+•Is it less than τn, the deadline for tn?
+•Worst-case: every task, i, is initiated at the same time
+•This is the critical instant
+•CPU must execute ceiling(τn/τi) executions of every task ti
+Ln = sum( ceiling(τn/τi) ) for all i, Ti<=τn
+
 ## Inter-Task Blocking
 Multiple tasks run concurrently to achieve various functionalities. It is essential to manage the shared resources and communication between tasks to ensure the proper functioning of the system. Inter-task blocking can occur when one task must wait for another task to complete a specific operation, which could potentially lead to delays or even deadlocks. To avoid such issues, the following measures have been taken into account:
 
@@ -110,7 +130,7 @@ A counting semaphore is used for managing the availability of resources, particu
   
  ## Atomicity
  
-In the synthesizer code, ```__atomic_store_n``` was used to update shared data such as control settings and copying the local copy of the current step size linked list to the global linked list. By using this function, the code guarantees that other threads will not access the data while it is being updated, ensuring data consistency.
+In the synthesizer code, ```__atomic_store_n``` was used to update shared data such as control settings and copying the local copy of the current step size linked list to the global linked list. By using this function, the code guarantees that other threads will not access the data while it is being updated, ensuring data consistency. 
 
 
  ## Shared Resources
@@ -122,8 +142,10 @@ The sinTable is a precomputed lookup table used for generating sine waves. It is
 The``` keyArray``` and ```octaveRX``` arrays store the current state of the synthesizer's keys and octaves. These arrays are shared between multiple tasks, such as ```scanKeysTask```, ```readControlsTask```, and ```decodeTask```. To ensure data consistency, a mutex (```keyArrayMutex```) is used to synchronise access to these shared resources.
 
 - **Display variables (```showCAN, volume, octaveSelect, waveform, effect, canMode, canModes, effects, waves, keys```)**  
-These variables are shared between the ```displayKeysTask``` and ```readControlsTask``` for displaying information on the screen. Care should be taken to avoid race conditions or inconsistent updates when modifying these variables in multiple tasks.
+These variables are shared between the ```displayKeysTask``` and ```readControlsTask``` for displaying information on the screen. Care should be taken to avoid race conditions or inconsistent updates when modifying these variables in multiple tasks. The variables for the knobs are written to atomically to atomically for this reason.
 
+- **CAN message variables ( ```msgInQ, msgOutQ, CAN_TX_Semaphore```)**
+The incoming CAN messages recieved in ``` CAN_RX_ISR()``` are decoded in ```decodeTask``` and to ensure thread safety, a queue (```msgInQ```) is used to prevent a bottleneck in the case of an influx of recieved messages. Outgoing CAN messages (created upon note presses or releases) are stored in the ```msgOutQ``` queue in ```scanKeysTask```. The counting ```CAN_TX_Semaphore``` is used in ```CAN_TX_Task``` to regulate the outgoing messages as there are only 3 mailboxes for sending, so once the ```CAN_TX_Task``` sees there is an outgoing message and there is a free mailbox (kept track of by the semaphore), the semaphore is taken. ```CAN_TX_ISR``` gives the semaphore when a mailbox becomes free. The use of queues and a semaphore keeps the CAN functions thread safe.
 
 ## Task Dependencies
 There are several tasks with dependencies between them. Identifying these dependencies is crucial to ensure correct task execution and to prevent potential issues arising from inter-task communication. Here, we discuss the dependencies between the tasks:
@@ -142,4 +164,3 @@ The ```CAN_RX_ISR``` function is an interrupt service routine that is triggered 
 
 - ```CAN_TX_Task``` **and** ```CAN_TX_ISR```  
 The ```CAN_TX_Task``` is responsible for transmitting CAN messages by dequeuing messages from the ```msgOutQ``` queue and sending them over the CAN bus. The ```CAN_TX_ISR``` function is an interrupt service routine triggered when a CAN message has been transmitted. This ISR gives a semaphore to indicate that the transmission is complete. The ```CAN_TX_Task``` is dependent on the ```CAN_TX_ISR``` to know when it can send the next message. This dependency is managed using the *FreeRTOS* semaphore mechanism, which provides a way to synchronise the execution of these tasks.
-
