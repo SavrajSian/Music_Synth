@@ -24,9 +24,10 @@ The synthesizer project is an embedded application designed to create, manipulat
 - **Waveforms**: The synthesizer supports multiple waveforms, allowing users to choose between different sounds. These waveforms include sine, triangle, square, and sawtooth. The waveform selection is managed through a function knob, which reads the user's input and updates the waveform accordingly.
 
 
-- **Effects**: The synthesizer offers various audio effects to enhance the audio output. These effects include *vibrato*, *octave*, *arpeggiator 1*, *arpeggiator 2* and *chords*. The effects are controlled by a dedicated knob, which allows the user to select and apply the desired effect to the audio signal. Furthermore, the joystick acts as a pitch bender, offsetting the pitch up to 3 semi-tones above and below.
+- **Effects**: The synthesizer offers various audio effects to enhance the audio output. These effects include *vibrato*, *octave*, *arpeggiator 1*, *arpeggiator 2* and *chords*. The effects are controlled by a dedicated knob, which allows the user to select and apply the desired effect to the audio signal. Furthermore, the joystick acts as a pitch bender, offsetting the pitch up to 3 semi-tones above and below.  There is also a song which plays upon pressing in the 2nd knob which you can play over.
 
   The sine wave generation in the synthesizer is achieved using a lookup table, which provides a fast and efficient method for generating sine waves in real-time audio synthesis applications. This method allows for accurate sine wave generation while minimising computational overhead and enabling flexible control of the waveform.
+  
   
   
 - **Effects Control**: The synthesizer has a dedicated knob to change variables regarding the effects. This makes it easy for users to experiment with different settings and create their own unique sounds. The knob can be used to control various effect parameters such as the speed and depth of the vibrato effect, the number of octaves to shift the pitch of the sound, the pattern or style of the arpeggio effect, and the type of chords being played (major, minor, diminished, augmented, seventh). The ability to customize the effects using a single knob provides a lot of flexibility and creativity to the users, allowing them to create their own unique sound and style.
@@ -45,6 +46,11 @@ The synthesizer project is an embedded application designed to create, manipulat
 
 
 - **CAN Bus Communication:** The synthesizer uses the CAN bus for data transmission and reception. This allows for communication between different devices or modules within the system. The CAN communication is managed through dedicated tasks for sending and receiving messages, with appropriate interrupts registered for efficient message handling. By hold pressing the volume knob, a new menu is displayed, allowing the user to switch CAN mode from *Master* to *Send 1* or *Send 2* with a rotation. While in *Send* mode, only the octaves are displayed.
+
+  | **Byte**       | 0       | 1        | 2        | 3         | 4      | 5   | 6   | 7   |
+  |----------------|---------|----------|----------|-----------|--------|-----|-----|-----|
+  | **Identifier** | Address | Keys 1-4 | Keys 5-8 | Keys 9-12 | Octave | N/A | N/A | N/A |
+  | **Example**    | 1       | 1010     | 0010     | 1000      | 4      | N/A | N/A | N/A |
 
 
 - **Real-Time Control and Feedback:** The synthesizer employs a real-time operating system (RTOS) to manage tasks such as key scanning, control reading, and display updates. This ensures that the user has a responsive and seamless experience while interacting with the device.
@@ -80,12 +86,12 @@ The ```decodeTask``` is responsible for decoding incoming CAN bus messages. It p
 
 ## Performance Table and Critical Analysis
 
-| Thread Handle   | Priority | Minimum Initiation Interval $\tau_i$ (ms) | Maximum Execution Time $T_i$ (ms) | $\lceil \frac{\tau_n}{\tau_i}\rceil T_i$ | 
+| Thread Handle | Priority | Minimum Initiation Interval $\tau_i$ (ms) | Maximum Execution Time $T_i$ (ms) | $\lceil \frac{\tau_n}{\tau_i}\rceil T_i$ (ms)| 
 |--------------------------------------------|----------|----------------------------------|-----------------------------|---------------|
 | ```scanKeysHandle```                       |    5     |             20                   |       0.31                  |    1.55        |
 | ```readControlsHandle```                   |    4     |             20                   |       0.52                  |    2.60       |
 | ```displayKeysHandle```                    |    1     |             100                  |       17.2                  |      17.20    |
-| ```decodeTaskHandle```                     |    2     |             25.2                 |       0.027                 |      0.108         |
+| ```decodeTaskHandle```                     |    2     |             25.2                 |       0.027                 |      0.11         |
 | ```CAN_TX_TaskHandle``` & ```CAN_TX_ISR``` |    3     |             60                   |       0.91                  |       1.82        |
 | ```sampleISR```                            |Interrupt |            0.045                 |      0.019                  |      42.24    |
 | ```CAN_RX_ISR```                           |Interrupt |            0.7                   |       0.003                 |       0.43        |
@@ -93,7 +99,18 @@ The ```decodeTask``` is responsible for decoding incoming CAN bus messages. It p
 
 The worst case (maximum) execution time for  ```scanKeys``` was when all 12 keys were pressed down. ```readControls``` always does the same thing regardless of presses. ```displayKeys``` was at the worst case scenario with all keys pressed down to display on the screen. ```sampleISR``` is on a timer to interrupt 22000 times a second, so the minimum initiation interval is 1/22050 = 0.045ms. Its worst case scenario is playing a sine wave (most demanding wave) using a long list of notes (12 notes pressed). The minimum initiation interval for ```CAN_RX_ISR``` is 0.7ms since this is the minimum amount of time to transmit a CAN frame. The analysis for ```decodeTask``` is based on 36 executions with an initiation interval of 25.2ms since is has a 36 item queue that would fill in 0.7x36 = 25.2ms in the worst case. The ```CAN_TX_TaskHandle``` and ```CAN_TX_ISR``` are timed in one since the ISR needs to release the semaphore. 
 
-The summation of the last column (latency) in the table is 63.95ms, which is less than the lowest priority task (100ms) and therefore the system performs within the timing constraints and no deadline will be missed. 
+The summation of the last column (latency) in the table is 65.95ms, which is less than the lowest priority task (100ms) and therefore the system performs within the timing constraints and no deadline will be missed. Even with scheduler jitter accounted for (1ms per high priority thread) it performs within the deadline.
+
+In this worst case, the CPU is in use for 63.95% of the time, so therefore in regular usage this utilsation would be lower. For the time that the CPU is in use, the percentage of time each thread/ISR takes up is as follows:
+
+| Thread Handle | Percentage of CPU time taken up when not idle
+|---------------|--------------------------------|
+|```scanKeysHandle``` | 2.35%|
+|```readControlsHandle``` | 3.947%|
+|```displayKeysHandle``` | 26.08%|
+| ```CAN_TX_TaskHandle``` & ```CAN_TX_ISR```|0.17%|
+| ```sampleISR``` | 64.04%|                 
+| ```CAN_RX_ISR``` |0.65%|   
 
 Note: A higher number in the priority column means the task is a higher priority.
 
@@ -129,7 +146,15 @@ The sinTable is a precomputed lookup table used for generating sine waves. It is
 - **Key array and octave data (```keyArray, octaveRX```)**  
 The``` keyArray``` and ```octaveRX``` arrays store the current state of the synthesizer's keys and octaves. These arrays are shared between multiple tasks, such as ```scanKeysTask```, ```readControlsTask```, and ```decodeTask```. To ensure data consistency, a mutex (```keyArrayMutex```) is used to synchronise access to these shared resources.
 
-- **Display variables (```showCAN, volume, octaveSelect, waveform, effect, canMode, canModes, effects, waves, keys```)**  
+- **Display variables (```show
+
+
+
+
+
+
+
+, volume, octaveSelect, waveform, effect, canMode, canModes, effects, waves, keys```)**  
 These variables are shared between the ```displayKeysTask``` and ```readControlsTask``` for displaying information on the screen. Care should be taken to avoid race conditions or inconsistent updates when modifying these variables in multiple tasks. The variables for the knobs are written to atomically to atomically for this reason.
 
 - **CAN message variables ( ```msgInQ, msgOutQ, CAN_TX_Semaphore```)**
