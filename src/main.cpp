@@ -147,8 +147,13 @@ volatile int pressedKeys = 0;
 
 // CAN Message
 volatile uint32_t prev_message[2] = {0, 0};
-volatile uint32_t cur_message[2] = {0, 0};
-volatile int octaveRX[2] = {0, 0};
+#if ENABLE_TESTING == 1
+  volatile uint32_t cur_message[2] = {0b111111111111, 0b111111111111};
+  volatile int octaveRX[2] = {5, 6};
+#else
+  volatile uint32_t cur_message[2] = {0, 0};
+  volatile int octaveRX[2] = {0, 0};
+#endif
 
 // Knob Variables
 volatile int volume{6}, waveform{0}, effect{0}, subEffect{0}, effectVal{1}, canMode{0}, vibratoEffect{0}, arp1Effect{0}, arp2Effect{0};
@@ -560,7 +565,12 @@ void scanKeysTask(void *pvParameters)
       delayMicroseconds(3);
       pressedKeys |= readCols() << (4 * row);
     }
-    pressedKeys = ~pressedKeys & 0x0FFF;
+    #if ENABLE_TESTING == 1
+      pressedKeys = 0b111111111111;
+    #else
+      pressedKeys = ~pressedKeys & 0x0FFF;
+    #endif
+
     // Add key step sizes to linked list  (polyphony)
     // LOCAL KEYS
     if (canMode == 0)
@@ -1186,11 +1196,12 @@ void setup()
   // Create timer for audio
   TIM_TypeDef *Instance = TIM1;
   HardwareTimer *sampleTimer = new HardwareTimer(Instance);
+
+#if ENABLE_TESTING == 0
   sampleTimer->setOverflow(22050, HERTZ_FORMAT);
   sampleTimer->attachInterrupt(sampleISR);
   sampleTimer->resume();
 
-#if ENABLE_TESTING == 0
   TaskHandle_t scanKeysHandle = NULL;
   xTaskCreate(scanKeysTask, "scanKeys", 64, NULL, 5, &scanKeysHandle);
   TaskHandle_t displayKeysHandle = NULL;
