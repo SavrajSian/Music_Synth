@@ -80,7 +80,7 @@ The ```decodeTask``` is responsible for decoding incoming CAN bus messages. It p
 
 ## Performance table
 
-| Thread Handle                              | Priority | Minimum Initiation Interval (ms) | Maximum Execution Time (ms) | $\frac{\tau_n}{\tau_i}T_i$ | 
+| Thread Handle      | Priority | Minimum Initiation Interval (ms) | Maximum Execution Time (ms) | $\lceil \frac{\tau_n}{\tau_i}\rceil T_i$ | 
 |--------------------------------------------|----------|----------------------------------|-----------------------------|---------------|
 | ```scanKeysHandle```                       |    5     |             20                   |       0.31                  |    0.8        |
 | ```readControlsHandle```                   |    4     |             20                   |       0.52                  |    1.67       |
