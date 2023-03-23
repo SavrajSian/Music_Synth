@@ -1099,8 +1099,14 @@ void CAN_RX_ISR(void)
 {
   uint8_t RX_Message_ISR[8];
   uint32_t ID;
+  #if ENABLE_TESTING == 1
+    xQueueSend(msgInQ, RX_Message_ISR, portMAX_DELAY);
+    return;
+  #endif
   CAN_RX(ID, RX_Message_ISR);
+  
   xQueueSendFromISR(msgInQ, RX_Message_ISR, NULL);
+
 }
 
 void CAN_TX_Task(void *pvParameters)
@@ -1108,12 +1114,11 @@ void CAN_TX_Task(void *pvParameters)
   uint8_t msgOut[8];
   while (1)
   { 
-    Serial.println("before");
+    #if ENABLE_TESTING == 0
     xQueueReceive(msgOutQ, msgOut, portMAX_DELAY);
-    Serial.println("after");
+    #endif
     xSemaphoreTake(CAN_TX_Semaphore, portMAX_DELAY);
     CAN_TX(0x123, msgOut);
-    Serial.println("cantx After");
     #if ENABLE_TESTING == 1
       break;
     #endif
@@ -1122,9 +1127,11 @@ void CAN_TX_Task(void *pvParameters)
 
 void CAN_TX_ISR(void)
 {
-  Serial.println("isrr");
+    #if ENABLE_TESTING == 1
+      xSemaphoreGive(CAN_TX_Semaphore);
+        return;
+    #endif
   xSemaphoreGiveFromISR(CAN_TX_Semaphore, NULL);
-  Serial.println("isr after");
 }
 
 void decodeTask(void *pVparameters)
@@ -1134,9 +1141,8 @@ void decodeTask(void *pVparameters)
 #if ENABLE_TESTING == 0
     xQueueReceive(msgInQ, RX_Message, portMAX_DELAY); // wait for message
 #endif
-
     cur_message[RX_Message[0]] = 0;
-    // Create the  keyboard array
+    // Create the keyboard array
     cur_message[RX_Message[0]] |= RX_Message[1];
     cur_message[RX_Message[0]] <<= 4;
     cur_message[RX_Message[0]] |= RX_Message[2];
@@ -1145,7 +1151,6 @@ void decodeTask(void *pVparameters)
     // Set the keyboard octave
     octaveRX[RX_Message[0]] = RX_Message[4];
     // Serial.println(cur_message[0]);
-
 #if ENABLE_TESTING == 1
     break;
 #endif
@@ -1191,7 +1196,12 @@ void setup()
   keyArrayMutex = xSemaphoreCreateMutex();
 
   // CAN bus
+  #if ENABLE_TESTING == 1
+  CAN_Init(true);
+  #endif
+  #if ENABLE_TESTING == 0
   CAN_Init(false);
+  #endif
   setCANFilter(0x123, 0x7ff);
   CAN_RegisterRX_ISR(CAN_RX_ISR);
   CAN_RegisterTX_ISR(CAN_TX_ISR);
@@ -1281,36 +1291,61 @@ void setup()
   Serial.print((float)finishTime / (float)45.45);
   Serial.println("%");
 
+  //RECIEVING
+  uint8_t msgOut[8] = {0};
+  
+  startTime = micros();
+  for (int iter = 0; iter < 20; iter++)
+  { 
+    CAN_RX_ISR();
+  }
+  finishTime = micros() - startTime;
+  Serial.print("CAN_RX_ISR:\t\t");
+  Serial.print((finishTime / 20)); //account for CAN_TX - we've timed it separately
+  Serial.print("\tmicros / iter");
+  Serial.print("\tCPU: ");
+  Serial.print((float)finishTime / (float)45.45);
+  Serial.println("%");
+
+
   // TRANSMITTIMG
+  
   TX_Message[0] = 1;
   TX_Message[1] = 0b1111;
   TX_Message[2] = 0b1111;
   TX_Message[3] = 0b1111;
   TX_Message[4] = 4;
   startTime = micros();
-  for (int iter = 0; iter < 64; iter++)
+  for (int iter = 0; iter < 36; iter++)
   {
-    xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
     CAN_TX_Task(NULL);
-  }
-  finishTime = micros() - startTime;
+    CAN_TX_ISR();
+    
+  }   
+  finishTime = micros() - startTime; //account for time taken by xqueue send (timed separately)
   Serial.print("CAN_TX_Task:\t\t");
-  Serial.print(finishTime / 64);
+  Serial.print(finishTime / 36);
   Serial.print("\tmicros / iter");
   Serial.print("\tCPU: ");
   Serial.print((float)finishTime / (float)100000);
   Serial.println("%");
 
   // DECODING
+
+    RX_Message[0] =  1;
+    RX_Message[1] = 0b1111; // keys 9-12
+    RX_Message[2] = 0b1111; // keys 5-8
+    RX_Message[3] = 0b1111;        // keys 1-4
+    RX_Message[4] = 5;
   startTime = micros();
-  for (int iter = 0; iter < 64; iter++)
+  for (int iter = 0; iter < 36; iter++)
   {
     decodeTask(NULL);
   }
   finishTime = micros() - startTime;
   Serial.print("decodeTask:\t\t");
-  Serial.print(finishTime / 64);
-  Serial.print("\tmicros / iter");
+  Serial.print(finishTime);
+  Serial.print("\tmicros for 36 iter");
   Serial.print("\tCPU: ");
   Serial.print((float)finishTime / (float)100000);
   Serial.println("%");
