@@ -912,7 +912,6 @@ void readControlsTask(void *pvParameters)
 {
   const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
   TickType_t xLastWakeTime = xTaskGetTickCount();
-
   // Knob Constructors
   Knob volumeKnob(0, 8, &volume);
   Knob functionKnob(0, 3, &waveform);
@@ -1228,7 +1227,7 @@ void setup()
   Serial.print(finishTime / 64);
   Serial.print("\tmicros / iter");
   Serial.print("\tCPU: ");
-  Serial.print(finishTime / 20000);
+  Serial.print((float)finishTime / (float)20000);
   Serial.println("%");
 
   startTime = micros();
@@ -1241,7 +1240,7 @@ void setup()
   Serial.print(finishTime / 64);
   Serial.print("\tmicros / iter");
   Serial.print("\tCPU: ");
-  Serial.print(finishTime / 100000);
+  Serial.print((float)finishTime / (float)100000);
   Serial.println("%");
 
   startTime = micros();
@@ -1254,7 +1253,7 @@ void setup()
   Serial.print(finishTime / 64);
   Serial.print("\tmicros / iter");
   Serial.print("\tCPU: ");
-  Serial.print(finishTime / 20000);
+  Serial.print((float)finishTime / (float)20000);
   Serial.println("%");
 
   startTime = micros();
@@ -1267,7 +1266,20 @@ void setup()
   Serial.print(finishTime / 64);
   Serial.print("\tmicros / iter");
   Serial.print("\tCPU: ");
-  Serial.print(finishTime / 100000);
+  Serial.print((float)finishTime / (float)100000);
+  Serial.println("%");
+
+  startTime = micros();
+  for (int iter = 0; iter < 64; iter++)
+  {
+    sampleISR();
+  }
+  finishTime = micros() - startTime;
+  Serial.print("sampleISR:\t\t");
+  Serial.print(finishTime / 64);
+  Serial.print("\tmicros / iter");
+  Serial.print("\tCPU: ");
+  Serial.print((float)finishTime / (float)45.45);
   Serial.println("%");
 #endif
 
