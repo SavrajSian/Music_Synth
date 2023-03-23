@@ -20,6 +20,10 @@ For this project, we closely followed this [specification](doc/Coursework_2_Spec
 ## Introduction
 The synthesizer project is an embedded application designed to create, manipulate, and output audio signals. It employs a combination of hardware and software components to achieve a versatile and user-friendly experience. The synthesizer includes a range of features such as multiple waveforms, effects, volume control, and octave selection. Additionally, the project utilises CAN bus communication for data transmission and reception, enabling multiple synths to link together to form a larger keyboard.
 
+
+![Dependency Graph](/synthDiagram.png)
+
+
 ## Features
 - **Waveforms**: The synthesizer supports multiple waveforms, allowing users to choose between different sounds. These waveforms include sine, triangle, square, and sawtooth. The waveform selection is managed through a function knob, which reads the user's input and updates the waveform accordingly.
 
