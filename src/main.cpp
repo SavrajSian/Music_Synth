@@ -1107,16 +1107,24 @@ void CAN_TX_Task(void *pvParameters)
 {
   uint8_t msgOut[8];
   while (1)
-  {
+  { 
+    Serial.println("before");
     xQueueReceive(msgOutQ, msgOut, portMAX_DELAY);
+    Serial.println("after");
     xSemaphoreTake(CAN_TX_Semaphore, portMAX_DELAY);
     CAN_TX(0x123, msgOut);
+    Serial.println("cantx After");
+    #if ENABLE_TESTING == 1
+      break;
+    #endif
   }
 }
 
 void CAN_TX_ISR(void)
 {
+  Serial.println("isrr");
   xSemaphoreGiveFromISR(CAN_TX_Semaphore, NULL);
+  Serial.println("isr after");
 }
 
 void decodeTask(void *pVparameters)
@@ -1216,6 +1224,7 @@ void setup()
 #if ENABLE_TESTING == 1
 
   Serial.println("-=-=-=-=-=-=-=-=-=-=-=-=-=-");
+  // SCAN KEYS
   uint32_t startTime = micros();
   uint32_t finishTime = 0;
   for (int iter = 0; iter < 64; iter++)
@@ -1230,6 +1239,7 @@ void setup()
   Serial.print((float)finishTime / (float)20000);
   Serial.println("%");
 
+  // DISPLAY KEYS
   startTime = micros();
   for (int iter = 0; iter < 64; iter++)
   {
@@ -1243,6 +1253,7 @@ void setup()
   Serial.print((float)finishTime / (float)100000);
   Serial.println("%");
 
+  // READ CONTROLS
   startTime = micros();
   for (int iter = 0; iter < 64; iter++)
   {
@@ -1256,19 +1267,7 @@ void setup()
   Serial.print((float)finishTime / (float)20000);
   Serial.println("%");
 
-  startTime = micros();
-  for (int iter = 0; iter < 64; iter++)
-  {
-    decodeTask(NULL);
-  }
-  finishTime = micros() - startTime;
-  Serial.print("decodeTask:\t\t");
-  Serial.print(finishTime / 64);
-  Serial.print("\tmicros / iter");
-  Serial.print("\tCPU: ");
-  Serial.print((float)finishTime / (float)100000);
-  Serial.println("%");
-
+  // SAMPLEISR
   startTime = micros();
   for (int iter = 0; iter < 64; iter++)
   {
@@ -1280,6 +1279,40 @@ void setup()
   Serial.print("\tmicros / iter");
   Serial.print("\tCPU: ");
   Serial.print((float)finishTime / (float)45.45);
+  Serial.println("%");
+
+  // TRANSMITTIMG
+  TX_Message[0] = 1;
+  TX_Message[1] = 0b1111;
+  TX_Message[2] = 0b1111;
+  TX_Message[3] = 0b1111;
+  TX_Message[4] = 4;
+  startTime = micros();
+  for (int iter = 0; iter < 64; iter++)
+  {
+    xQueueSend(msgOutQ, TX_Message, portMAX_DELAY);
+    CAN_TX_Task(NULL);
+  }
+  finishTime = micros() - startTime;
+  Serial.print("CAN_TX_Task:\t\t");
+  Serial.print(finishTime / 64);
+  Serial.print("\tmicros / iter");
+  Serial.print("\tCPU: ");
+  Serial.print((float)finishTime / (float)100000);
+  Serial.println("%");
+
+  // DECODING
+  startTime = micros();
+  for (int iter = 0; iter < 64; iter++)
+  {
+    decodeTask(NULL);
+  }
+  finishTime = micros() - startTime;
+  Serial.print("decodeTask:\t\t");
+  Serial.print(finishTime / 64);
+  Serial.print("\tmicros / iter");
+  Serial.print("\tCPU: ");
+  Serial.print((float)finishTime / (float)100000);
   Serial.println("%");
 #endif
 
