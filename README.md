@@ -47,6 +47,11 @@ The synthesizer project is an embedded application designed to create, manipulat
 
 - **CAN Bus Communication:** The synthesizer uses the CAN bus for data transmission and reception. This allows for communication between different devices or modules within the system. The CAN communication is managed through dedicated tasks for sending and receiving messages, with appropriate interrupts registered for efficient message handling. By hold pressing the volume knob, a new menu is displayed, allowing the user to switch CAN mode from *Master* to *Send 1* or *Send 2* with a rotation. While in *Send* mode, only the octaves are displayed.
 
+  | **Byte**       | 0       | 1        | 2        | 3         | 4      | 5   | 6   | 7   |
+  |----------------|---------|----------|----------|-----------|--------|-----|-----|-----|
+  | **Identifier** | Address | Keys 1-4 | Keys 5-8 | Keys 9-12 | Octave | N/A | N/A | N/A |
+  | **Example**    | 1       | 1010     | 0010     | 1000      | 4      | N/A | N/A | N/A |
+
 
 - **Real-Time Control and Feedback:** The synthesizer employs a real-time operating system (RTOS) to manage tasks such as key scanning, control reading, and display updates. This ensures that the user has a responsive and seamless experience while interacting with the device.
 
@@ -141,7 +146,15 @@ The sinTable is a precomputed lookup table used for generating sine waves. It is
 - **Key array and octave data (```keyArray, octaveRX```)**  
 The``` keyArray``` and ```octaveRX``` arrays store the current state of the synthesizer's keys and octaves. These arrays are shared between multiple tasks, such as ```scanKeysTask```, ```readControlsTask```, and ```decodeTask```. To ensure data consistency, a mutex (```keyArrayMutex```) is used to synchronise access to these shared resources.
 
-- **Display variables (```showCAN, volume, octaveSelect, waveform, effect, canMode, canModes, effects, waves, keys```)**  
+- **Display variables (```show
+
+
+
+
+
+
+
+, volume, octaveSelect, waveform, effect, canMode, canModes, effects, waves, keys```)**  
 These variables are shared between the ```displayKeysTask``` and ```readControlsTask``` for displaying information on the screen. Care should be taken to avoid race conditions or inconsistent updates when modifying these variables in multiple tasks. The variables for the knobs are written to atomically to atomically for this reason.
 
 - **CAN message variables ( ```msgInQ, msgOutQ, CAN_TX_Semaphore```)**
