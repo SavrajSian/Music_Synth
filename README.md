@@ -80,15 +80,19 @@ The ```decodeTask``` is responsible for decoding incoming CAN bus messages. It p
 
 ## Performance table
 
-| Thread Handle           | Priority | Average Iteration Time | Assigned Iteration Time | CPU Usage |
-|-------------------------|----------|------------------------|-------------------------|-----------|
-| ```scanKeysHandle```    |    2     |                        | 20                      |           |
-| ```readControlsHandle```|    1     |                        | 20                      |           |
-| ```displayKeysHandle``` |    1     |                        | 100                     |           |
-| ```decodeTaskHandle```  |    4     |                        | None                    |           |
-| ```CAN_TX_TaskHandle``` |    3     |                        | None                    |           |
+| Thread Handle           | Priority | Minimum Initiation Interval (ms) | Maximum Execution Time (ms) | CPU Usage (%) | 
+|-------------------------|----------|----------------------------------|------------------------|-----------|
+| ```scanKeysHandle```    |    5     |             20                   |       0.31               |    0.8       |
+| ```readControlsHandle```|    4     |             20                   |       0.52               |    1.67       |
+| ```displayKeysHandle``` |    1     |             100                  |       17.2            |      11.04     |
+| ```decodeTaskHandle```  |    2     |             25.2                 |                    |           |
+| ```CAN_TX_TaskHandle``` |    3     |                             |                    |           |
+| ```sampleISR```         |Interrupt |            0.045                  |      0.019                   |  27.72         |
+| ```CAN_RX_ISR```        |Interrupt |            0.7                 |                    |           |
+| ```CAN_TX_ISR```        |Interrupt |                             |                    |           |
 
 
+The worst case (maximum) execution time for  ```scanKeys``` was when all 12 keys were pressed down. ```readControls``` always does the same thing regardless of presses. ```displayKeys``` was at the worst case scenario with all keys pressed down to display on the screen. ```sampleISR``` is on a timer to interrupt 22000 times a second, so the minimum initiation interval is 1/22050 = 0.045ms. Its worst case scenario is playing a sine wave (most demanding wave) using a long list of notes (12 notes pressed). The minimum initiation interval for ```CAN_RX_ISR``` is 0.7ms since this is the minimum amount of time to transmit a CAN frame.
 
 Metrics for analysis:
 •Initiation: A new iteration of a task
