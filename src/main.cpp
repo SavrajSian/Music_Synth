@@ -22,7 +22,7 @@ constexpr uint32_t calculateStepSize(float frequency)
 {
   return static_cast<uint32_t>((pow(2, 32) * frequency) / samplingFreq);
 }
-// 2 - 8 Octaves of step sizes - super long
+// 2 - 8 Octaves of step sizes - super long, i know...
 constexpr uint32_t stepSizes[] = {
     calculateStepSize(calculateFreq(-33)), // C2
     calculateStepSize(calculateFreq(-32)), // C#2
@@ -179,6 +179,9 @@ volatile int intervalDiminished[2] = {3, 6};
 volatile int intervalAugmented[2] = {4, 8};
 volatile int intervalSeventh[3] = {4, 7, 11};
 volatile int chordNotes[3];
+volatile bool playSong = 0;
+volatile bool buttonToggle = 0;
+
 // Pin definitions
 // Row select and enable
 const int RA0_PIN = D3;
@@ -317,7 +320,7 @@ void sampleISR()
         current = current->next;
         i += 1;
       }
-      sample = sample * volume / 8;
+      sample = (int32_t)(sample * (float)volume / 8.0);
       analogWrite(OUTR_PIN, sample / i + 64);
     }
     break;
@@ -345,7 +348,7 @@ void sampleISR()
         current = current->next;
         i += 1;
       }
-      sample = sample * volume / 8;
+      sample = (int32_t)(sample * (float)volume / 8.0);
       analogWrite(OUTR_PIN, sample / i + 128);
     }
     break;
@@ -365,7 +368,7 @@ void sampleISR()
         current = current->next;
         i += 1;
       }
-      sample = sample * volume / 8;
+      sample = (int32_t)(sample * (float)volume / 8.0);
       analogWrite(OUTR_PIN, sample / i + 128);
     }
     break;
@@ -543,9 +546,9 @@ void scanKeysTask(void *pvParameters)
 
   while (1)
   {
-  #if ENABLE_TESTING == 0
-      vTaskDelayUntil(&xLastWakeTime, xFrequency);
-  #endif
+#if ENABLE_TESTING == 0
+    vTaskDelayUntil(&xLastWakeTime, xFrequency);
+#endif
     LinkedList locallist;
     xSemaphoreTake(keyArrayMutex, portMAX_DELAY);
     pressedKeys = 0;
@@ -613,9 +616,9 @@ void scanKeysTask(void *pvParameters)
     __atomic_store_n(&oldtodelete.tail, locallist.tail, __ATOMIC_RELAXED);
     // printList(&allKeysPressed);
 
-  #if ENABLE_TESTING == 1
-      break;
-  #endif
+#if ENABLE_TESTING == 1
+    break;
+#endif
   }
 }
 
@@ -741,6 +744,160 @@ void pitchControl()
   }
 }
 
+void songBank1()
+{
+  octaveRX[0] = 4;
+  cur_message[0] = 0b000000000001;
+  delay(200);
+  cur_message[0] = 0b000000010000;
+  delay(200);
+  cur_message[0] = 0b000010000000;
+  delay(200);
+  cur_message[0] = 0b000000010000;
+  delay(200);
+  cur_message[0] = 0b000000000001;
+  delay(200);
+  cur_message[0] = 0b000000010000;
+  delay(200);
+  if (!playSong)
+  {
+    cur_message[0] = 0b000000000000;
+    return;
+  }
+  cur_message[0] = 0b000010000000;
+  delay(200);
+  cur_message[0] = 0b000000010000;
+  delay(200);
+  cur_message[0] = 0b000000000001;
+  delay(200);
+  cur_message[0] = 0b000000010000;
+  delay(200);
+  cur_message[0] = 0b000010000000;
+  delay(200);
+  cur_message[0] = 0b000000010000;
+  if (!playSong)
+  {
+    cur_message[0] = 0b000000000000;
+    return;
+  }
+  delay(200);
+  octaveRX[0] = 3;
+  cur_message[0] = 0b100000000000;
+  delay(200);
+  octaveRX[0] = 4;
+  cur_message[0] = 0b000000010000;
+  delay(200);
+  cur_message[0] = 0b000010000000;
+  delay(200);
+  cur_message[0] = 0b000000010000;
+  delay(200);
+  octaveRX[0] = 3;
+  cur_message[0] = 0b100000000000;
+  delay(200);
+  octaveRX[0] = 4;
+  cur_message[0] = 0b000000010000;
+  delay(200);
+  if (!playSong)
+  {
+    cur_message[0] = 0b000000000000;
+    return;
+  }
+  cur_message[0] = 0b000010000000;
+  delay(200);
+  cur_message[0] = 0b000000010000;
+  delay(200);
+  octaveRX[0] = 3;
+  cur_message[0] = 0b100000000000;
+  delay(200);
+  octaveRX[0] = 4;
+  cur_message[0] = 0b000000010000;
+  delay(200);
+  cur_message[0] = 0b000010000000;
+  delay(200);
+  cur_message[0] = 0b000000010000;
+  if (!playSong)
+  {
+    cur_message[0] = 0b000000000000;
+    return;
+  }
+  delay(200);
+  octaveRX[0] = 3;
+  cur_message[0] = 0b01000000000;
+  delay(200);
+  octaveRX[0] = 4;
+  cur_message[0] = 0b000000010000;
+  delay(200);
+  cur_message[0] = 0b001000000000;
+  delay(200);
+  cur_message[0] = 0b000000010000;
+  delay(200);
+  octaveRX[0] = 3;
+  cur_message[0] = 0b001000000000;
+  delay(200);
+  octaveRX[0] = 4;
+  cur_message[0] = 0b000000010000;
+  delay(200);
+  cur_message[0] = 0b001000000000;
+  delay(200);
+  if (!playSong)
+  {
+    cur_message[0] = 0b000000000000;
+    return;
+  }
+  cur_message[0] = 0b000000010000;
+  delay(200);
+  octaveRX[0] = 3;
+  cur_message[0] = 0b001000000000;
+  delay(200);
+  octaveRX[0] = 4;
+  cur_message[0] = 0b000000010000;
+  delay(200);
+  cur_message[0] = 0b001000000000;
+  delay(200);
+  cur_message[0] = 0b000000010000;
+  if (!playSong)
+  {
+    cur_message[0] = 0b000000000000;
+    return;
+  }
+  delay(200);
+  octaveRX[0] = 4;
+  cur_message[0] = 0b000000000001;
+  delay(200);
+  cur_message[0] = 0b000000100000;
+  delay(200);
+  cur_message[0] = 0b001000000000;
+  delay(200);
+  cur_message[0] = 0b000000100000;
+  delay(200);
+  cur_message[0] = 0b000000000001;
+  delay(200);
+  cur_message[0] = 0b000000100000;
+  if (!playSong)
+  {
+    cur_message[0] = 0b000000000000;
+    return;
+  }
+  delay(200);
+  cur_message[0] = 0b001000000000;
+  delay(200);
+  cur_message[0] = 0b000000100000;
+  delay(200);
+  cur_message[0] = 0b000000000001;
+  delay(200);
+  cur_message[0] = 0b000000100000;
+  delay(200);
+  cur_message[0] = 0b001000000000;
+  delay(200);
+  cur_message[0] = 0b000000100000;
+  delay(200);
+  if (!playSong)
+  {
+    cur_message[0] = 0b000000000000;
+    return;
+  }
+}
+
 void readControlsTask(void *pvParameters)
 {
   const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
@@ -762,9 +919,9 @@ void readControlsTask(void *pvParameters)
 
   while (1)
   {
-  #if ENABLE_TESTING == 0
-      vTaskDelayUntil(&xLastWakeTime, xFrequency);
-  #endif
+#if ENABLE_TESTING == 0
+    vTaskDelayUntil(&xLastWakeTime, xFrequency);
+#endif
 
     // Read knobs
     for (size_t row = 3; row < 7; row++)
@@ -819,12 +976,23 @@ void readControlsTask(void *pvParameters)
       showCAN = 1;
     }
 
+    // Play Song
+    if (((keyArray[3] & 0x02) >> 1 == 0) && buttonToggle == false)
+    {
+      playSong = !playSong;
+      buttonToggle = true;
+    }
+    if (((keyArray[3] & 0x02) >> 1 == 1) && buttonToggle == true)
+    {
+      buttonToggle = false;
+    }
+
     octaveControl();
     pitchControl();
 
-  #if ENABLE_TESTING == 1
-      break;
-  #endif
+#if ENABLE_TESTING == 1
+    break;
+#endif
   }
 }
 
@@ -835,9 +1003,9 @@ void displayKeysTask(void *pvParameters)
 
   while (1)
   {
-  #if ENABLE_TESTING == 0
-      vTaskDelayUntil(&xLastWakeTime, xFrequency);
-  #endif
+#if ENABLE_TESTING == 0
+    vTaskDelayUntil(&xLastWakeTime, xFrequency);
+#endif
     u8g2.setFont(u8g2_font_profont10_tf);
     u8g2.clearBuffer();
 
@@ -911,9 +1079,9 @@ void displayKeysTask(void *pvParameters)
     }
     digitalToggle(LED_BUILTIN);
 
-  #if ENABLE_TESTING == 1
-      break;
-  #endif
+#if ENABLE_TESTING == 1
+    break;
+#endif
   }
 }
 
@@ -946,9 +1114,9 @@ void decodeTask(void *pVparameters)
 {
   while (1)
   {
-  #if ENABLE_TESTING == 0
-      xQueueReceive(msgInQ, RX_Message, portMAX_DELAY); // wait for message
-  #endif
+#if ENABLE_TESTING == 0
+    xQueueReceive(msgInQ, RX_Message, portMAX_DELAY); // wait for message
+#endif
 
     cur_message[RX_Message[0]] = 0;
     // Create the  keyboard array
@@ -961,9 +1129,9 @@ void decodeTask(void *pVparameters)
     octaveRX[RX_Message[0]] = RX_Message[4];
     // Serial.println(cur_message[0]);
 
-  #if ENABLE_TESTING == 1
-      break;
-  #endif
+#if ENABLE_TESTING == 1
+    break;
+#endif
   }
 }
 
@@ -1022,79 +1190,83 @@ void setup()
   sampleTimer->attachInterrupt(sampleISR);
   sampleTimer->resume();
 
-  #if ENABLE_TESTING == 0
-    TaskHandle_t scanKeysHandle = NULL;
-    xTaskCreate(scanKeysTask, "scanKeys", 64, NULL, 5, &scanKeysHandle);
-    TaskHandle_t displayKeysHandle = NULL;
-    xTaskCreate(displayKeysTask, "displayKeys", 256, NULL, 1, &displayKeysHandle);
-    TaskHandle_t readControlsHandle = NULL;
-    xTaskCreate(readControlsTask, "readControls", 256, NULL, 4, &readControlsHandle);
-    TaskHandle_t decodeTaskHandle = NULL;
-    xTaskCreate(decodeTask, "decode", 256, NULL, 2, &decodeTaskHandle);
-    TaskHandle_t CAN_TX_TaskHandle = NULL;
-    xTaskCreate(CAN_TX_Task, "CAN_TX", 256, NULL, 3, &CAN_TX_TaskHandle);
-  #endif
+#if ENABLE_TESTING == 0
+  TaskHandle_t scanKeysHandle = NULL;
+  xTaskCreate(scanKeysTask, "scanKeys", 64, NULL, 5, &scanKeysHandle);
+  TaskHandle_t displayKeysHandle = NULL;
+  xTaskCreate(displayKeysTask, "displayKeys", 256, NULL, 1, &displayKeysHandle);
+  TaskHandle_t readControlsHandle = NULL;
+  xTaskCreate(readControlsTask, "readControls", 256, NULL, 4, &readControlsHandle);
+  TaskHandle_t decodeTaskHandle = NULL;
+  xTaskCreate(decodeTask, "decode", 256, NULL, 2, &decodeTaskHandle);
+  TaskHandle_t CAN_TX_TaskHandle = NULL;
+  xTaskCreate(CAN_TX_Task, "CAN_TX", 256, NULL, 3, &CAN_TX_TaskHandle);
+#endif
 
-  #if ENABLE_TESTING == 1
+#if ENABLE_TESTING == 1
 
-    Serial.println("-=-=-=-=-=-=-=-=-=-=-=-=-=-");
-    uint32_t startTime = micros();
-    uint32_t finishTime = 0;
-    for (int iter = 0; iter < 64; iter++)
-    {
-      scanKeysTask(NULL);
-    }
-    finishTime = micros() - startTime;
-    Serial.print("scanKeysTask:\t\t");
-    Serial.print(finishTime / 64);
-    Serial.print("\tmicros / iter");
-    Serial.print("\tCPU: ");
-    Serial.print(finishTime / 20000);
-    Serial.println("%");
+  Serial.println("-=-=-=-=-=-=-=-=-=-=-=-=-=-");
+  uint32_t startTime = micros();
+  uint32_t finishTime = 0;
+  for (int iter = 0; iter < 64; iter++)
+  {
+    scanKeysTask(NULL);
+  }
+  finishTime = micros() - startTime;
+  Serial.print("scanKeysTask:\t\t");
+  Serial.print(finishTime / 64);
+  Serial.print("\tmicros / iter");
+  Serial.print("\tCPU: ");
+  Serial.print(finishTime / 20000);
+  Serial.println("%");
 
-    startTime = micros();
-    for (int iter = 0; iter < 64; iter++)
-    {
-      displayKeysTask(NULL);
-    }
-    finishTime = micros() - startTime;
-    Serial.print("displayKeysTask:\t");
-    Serial.print(finishTime / 64);
-    Serial.print("\tmicros / iter");
-    Serial.print("\tCPU: ");
-    Serial.print(finishTime / 100000);
-    Serial.println("%");
+  startTime = micros();
+  for (int iter = 0; iter < 64; iter++)
+  {
+    displayKeysTask(NULL);
+  }
+  finishTime = micros() - startTime;
+  Serial.print("displayKeysTask:\t");
+  Serial.print(finishTime / 64);
+  Serial.print("\tmicros / iter");
+  Serial.print("\tCPU: ");
+  Serial.print(finishTime / 100000);
+  Serial.println("%");
 
-    startTime = micros();
-    for (int iter = 0; iter < 64; iter++)
-    {
-      readControlsTask(NULL);
-    }
-    finishTime = micros() - startTime;
-    Serial.print("readControlsTask:\t");
-    Serial.print(finishTime / 64);
-    Serial.print("\tmicros / iter");
-    Serial.print("\tCPU: ");
-    Serial.print(finishTime / 20000);
-    Serial.println("%");
+  startTime = micros();
+  for (int iter = 0; iter < 64; iter++)
+  {
+    readControlsTask(NULL);
+  }
+  finishTime = micros() - startTime;
+  Serial.print("readControlsTask:\t");
+  Serial.print(finishTime / 64);
+  Serial.print("\tmicros / iter");
+  Serial.print("\tCPU: ");
+  Serial.print(finishTime / 20000);
+  Serial.println("%");
 
-    startTime = micros();
-    for (int iter = 0; iter < 64; iter++)
-    {
-      decodeTask(NULL);
-    }
-    finishTime = micros() - startTime;
-    Serial.print("decodeTask:\t\t");
-    Serial.print(finishTime / 64);
-    Serial.print("\tmicros / iter");
-    Serial.print("\tCPU: ");
-    Serial.print(finishTime / 100000);
-    Serial.println("%");
-  #endif
+  startTime = micros();
+  for (int iter = 0; iter < 64; iter++)
+  {
+    decodeTask(NULL);
+  }
+  finishTime = micros() - startTime;
+  Serial.print("decodeTask:\t\t");
+  Serial.print(finishTime / 64);
+  Serial.print("\tmicros / iter");
+  Serial.print("\tCPU: ");
+  Serial.print(finishTime / 100000);
+  Serial.println("%");
+#endif
 
   vTaskStartScheduler();
 }
 
 void loop()
 {
+  if (playSong)
+  {
+    songBank1();
+  }
 }
