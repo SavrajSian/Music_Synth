@@ -31,7 +31,7 @@ The synthesizer project is an embedded application designed to create, manipulat
 - **Waveforms**: The synthesizer supports multiple waveforms, allowing users to choose between different sounds. These waveforms include sine, triangle, square, and sawtooth. The waveform selection is managed through a function knob, which reads the user's input and updates the waveform accordingly.
 
 
-- **Effects**: The synthesizer offers various audio effects to enhance the audio output. These effects include *vibrato*, *octave*, *arpeggiator 1*, *arpeggiator 2* and *chords*. The effects are controlled by a dedicated knob, which allows the user to select and apply the desired effect to the audio signal. Furthermore, the joystick acts as a pitch bender, offsetting the pitch up to 3 semi-tones above and below.  There is also a song which plays upon pressing in the 2nd knob which you can play over.
+- **Effects**: The synthesizer offers various audio effects to enhance the audio output. These effects include *vibrato*, *octave*, *arpeggiator 1*, *arpeggiator 2* and *chords*. The effects are controlled by a dedicated knob, which allows the user to select and apply the desired effect to the audio signal. Furthermore, the joystick acts as a pitch bender, offsetting the pitch up to 3 semi-tones above and below.  There is also a song which plays upon pressing in the 2nd knob which you can play over. This is an important feature that aids to music development.
 
   The sine wave generation in the synthesizer is achieved using a lookup table, which provides a fast and efficient method for generating sine waves in real-time audio synthesis applications. This method allows for accurate sine wave generation while minimising computational overhead and enabling flexible control of the waveform.
   
@@ -43,7 +43,7 @@ The synthesizer project is an embedded application designed to create, manipulat
 - **Volume Control:** The synthesizer provides a volume knob for adjusting the output level of the audio signal. This enables the user to control the loudness of the sound produced by the synthesizer.
 
 
-- **Octave Control:** The synthesizer features an octave control system, which allows users to shift the pitch of the audio signal up or down. This is achieved through a joystick input, which reads the user's input and updates the octave selection accordingly.
+- **Octave Control:** The synthesizer features an octave control system, which allows users to shift the pitch of the audio signal up or down. This is achieved through a joystick input, which reads the user's input and updates the octave selection accordingly. The synthesizer has an octave range of 2-8.
 
 
 - **Keyboard Input:** The synthesizer supports a 12-key input system, allowing users to play musical notes. The input is processed and sent to the synthesizer's audio generation system, which produces the corresponding audio signal based on the selected waveform, octave, and effects.
@@ -66,7 +66,7 @@ The synthesizer project is an embedded application designed to create, manipulat
 - **Audio Generation:** The synthesizer uses a hardware timer to generate audio signals at a specified sample rate. The timer triggers an interrupt service routine (ISR), which updates the output signal based on the current waveform, pitch, and effects.
 
 
-- **Polyphony:** The polyphony feature allows multiple notes to be played simultaneously, creating a richer and more complex sound. To efficiently manage and process these multiple notes, a *linked list* data structure is used. A linked list offers several advantages over arrays, particularly when dealing with polyphonic systems. There is a hard-set limit for polyphony, set to 84 keys at once.
+- **Polyphony:** The polyphony feature allows multiple notes to be played simultaneously, creating a richer and more complex sound. To efficiently manage and process these multiple notes, a *linked list* data structure is used. A linked list offers several advantages over arrays, particularly when dealing with polyphonic systems. There is a hard-set limit for polyphony, set to 84 keys at once. In practice, this may not be feasible (since we only have 10 fingers). Polyphony of 36 keys has been tested and proves to work without issue.
 
   A linked list is used to store the active notes. Each node in the linked list represents an individual note and contains the step size. When a new note is played, a new node is created and added to the linked list. As notes are released or completed, their corresponding nodes are removed from the list. The ```SampleISR``` iterates through the linked list, processing each active note independently. The resulting audio samples from each note are combined (mixed) to generate the final output sound. This approach allows the synthesizer to manage and process multiple notes efficiently, even as the number of active notes changes dynamically. Memory fragmentation should not be a problem since each node is independent and can point to any location in the heap, and the chunk of memory needed for each will be small since it is just an integer and a pointer to an address; long contiguous chunks would not be needed.
 
