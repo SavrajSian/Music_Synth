@@ -95,23 +95,7 @@ The worst case (maximum) execution time for  ```scanKeys``` was when all 12 keys
 
 The summation of the last column (latency) in the table is 63.95ms, which is less than the lowest priority task (100ms) and therefore the system performs within the timing constraints and no deadline will be missed. 
 
-Metrics for analysis:
-•Initiation: A new iteration of a task
-•Initiation interval (τ): time between initiations of a particular task
-•Deadline: time by which the task must be complete –often assumed to be the same as τ
-•Execution time (T): CPU time needed to complete a task if it is not interrupted
-•Latency: time actually taken to complete a task•Pre-emption: the interruption of a task by one with higher priority
-•Utilisation: the proportion of time that the CPU is busy
-
-Tasks with shortest initiation intervals should have higher priority, so the ones with the longer intervals have time to be completed if they are interrupted.
-
-Critical instant analysis:
-Consider the latency, Ln, of the lowest-priority task, tn, at the worst-case instant in time
-•Is it less than τn, the deadline for tn?
-•Worst-case: every task, i, is initiated at the same time
-•This is the critical instant
-•CPU must execute ceiling(τn/τi) executions of every task ti
-Ln = sum( ceiling(τn/τi) ) for all i, Ti<=τn
+Note: A higher number in the priority column means the task is a higher priority.
 
 ## Inter-Task Blocking
 Multiple tasks run concurrently to achieve various functionalities. It is essential to manage the shared resources and communication between tasks to ensure the proper functioning of the system. Inter-task blocking can occur when one task must wait for another task to complete a specific operation, which could potentially lead to delays or even deadlocks. To avoid such issues, the following measures have been taken into account:
