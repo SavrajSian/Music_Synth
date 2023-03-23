@@ -86,7 +86,7 @@ The ```decodeTask``` is responsible for decoding incoming CAN bus messages. It p
 | ```scanKeysHandle```                       |    5     |             20                   |       0.31                  |    1.55        |
 | ```readControlsHandle```                   |    4     |             20                   |       0.52                  |    2.60       |
 | ```displayKeysHandle```                    |    1     |             100                  |       17.2                  |      17.20    |
-| ```decodeTaskHandle```                     |    2     |             25.2                 |       0.027                 |      0.108         |
+| ```decodeTaskHandle```                     |    2     |             25.2                 |       0.027                 |      0.11         |
 | ```CAN_TX_TaskHandle``` & ```CAN_TX_ISR``` |    3     |             60                   |       0.91                  |       1.82        |
 | ```sampleISR```                            |Interrupt |            0.045                 |      0.019                  |      42.24    |
 | ```CAN_RX_ISR```                           |Interrupt |            0.7                   |       0.003                 |       0.43        |
@@ -94,7 +94,18 @@ The ```decodeTask``` is responsible for decoding incoming CAN bus messages. It p
 
 The worst case (maximum) execution time for  ```scanKeys``` was when all 12 keys were pressed down. ```readControls``` always does the same thing regardless of presses. ```displayKeys``` was at the worst case scenario with all keys pressed down to display on the screen. ```sampleISR``` is on a timer to interrupt 22000 times a second, so the minimum initiation interval is 1/22050 = 0.045ms. Its worst case scenario is playing a sine wave (most demanding wave) using a long list of notes (12 notes pressed). The minimum initiation interval for ```CAN_RX_ISR``` is 0.7ms since this is the minimum amount of time to transmit a CAN frame. The analysis for ```decodeTask``` is based on 36 executions with an initiation interval of 25.2ms since is has a 36 item queue that would fill in 0.7x36 = 25.2ms in the worst case. The ```CAN_TX_TaskHandle``` and ```CAN_TX_ISR``` are timed in one since the ISR needs to release the semaphore. 
 
-The summation of the last column (latency) in the table is 63.95ms, which is less than the lowest priority task (100ms) and therefore the system performs within the timing constraints and no deadline will be missed. Even with scheduler jitter accounted for (1ms per high priority thread) it performs within the deadline.
+The summation of the last column (latency) in the table is 65.95ms, which is less than the lowest priority task (100ms) and therefore the system performs within the timing constraints and no deadline will be missed. Even with scheduler jitter accounted for (1ms per high priority thread) it performs within the deadline.
+
+In this worst case, the CPU is in use for 63.95% of the time, so therefore in regular usage this utilsation would be lower. For the time that the CPU is in use, the percentage of time each thread/ISR takes up is as follows:
+
+| Thread Handle | Percentage of CPU time taken up when not idle
+|---------------|--------------------------------|
+|```scanKeysHandle``` | 2.35%|
+|```readControlsHandle``` | 3.947%|
+|```displayKeysHandle``` | 26.08%|
+|| ```CAN_TX_TaskHandle``` & ```CAN_TX_ISR```|0.17%|
+| ```sampleISR``` | 64.04%|                 
+| ```CAN_RX_ISR``` |0.65%|   
 
 Note: A higher number in the priority column means the task is a higher priority.
 
