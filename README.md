@@ -24,7 +24,7 @@ Note about the .bin file: sometimes it refuses to upload to the board through dr
 The synthesizer project is an embedded application designed to create, manipulate, and output audio signals. It employs a combination of hardware and software components to achieve a versatile and user-friendly experience. The synthesizer includes a range of features such as multiple waveforms, effects, volume control, and octave selection. Additionally, the project utilises CAN bus communication for data transmission and reception, enabling multiple synths to link together to form a larger keyboard.
 
 
-![Dependency Graph](/synthDiagram.png)
+![Dependency Graph](/doc/synthDiagram.png)
 
 
 ## Features
@@ -187,4 +187,4 @@ The ```CAN_TX_Task``` is responsible for transmitting CAN messages by dequeuing 
 
 Here is the dependency graph of the tasks:
 
-![Dependency Graph](/image.png)
+![Dependency Graph](/doc/image.png)
