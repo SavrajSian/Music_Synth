@@ -7,6 +7,9 @@ For this project, we closely followed this [specification](doc/Coursework_2_Spec
 
   [Lab Part 1](doc/LabPart1.md)  
   [Lab Part 2](doc/LabPart2.md)
+  
+  
+Note about the .bin file: sometimes it refuses to upload to the board through drag and drop, but does work if you use the command: platformio run --target upload --upload-port /[path to firmware.bin].
 
 ## Table of content
 * [Introduction](./README.md#introduction)
