@@ -18,6 +18,7 @@
 // Calculate step sizes and frequencies during compilation
 constexpr uint32_t samplingFreq = 22050;                  // Hz
 constexpr double twelfthRootOfTwo = pow(2.0, 1.0 / 12.0); // 12th root of 2
+
 // Returns frequency for given note
 constexpr uint32_t calculateFreq(float semiTone)
 {
@@ -28,7 +29,7 @@ constexpr uint32_t calculateStepSize(float frequency)
 {
   return static_cast<uint32_t>((pow(2, 32) * frequency) / samplingFreq);
 }
-// 2 - 8 Octaves of step sizes - super long, i know...
+// 2 - 8 Octaves of step sizes - super long :(
 constexpr uint32_t stepSizes[] = {
     calculateStepSize(calculateFreq(-33)), // C2
     calculateStepSize(calculateFreq(-32)), // C#2
@@ -116,7 +117,7 @@ constexpr uint32_t stepSizes[] = {
     calculateStepSize(calculateFreq(50))   // B8
 };
 
-// Audio definitions
+// Linked List Struct
 struct Node
 {
   uint32_t data = 0;
@@ -129,9 +130,11 @@ struct LinkedList
   Node *tail = nullptr;
 };
 
+
 const uint32_t interval = 100; // Display update interval
 volatile LinkedList currentStepSizes;
 
+// Display Variables
 const char *notes[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 const char *keys[12] = {};
 const char *waves[4] = {"Saw", "Square", "Triangle", "Sine"};
@@ -172,7 +175,7 @@ const int MAX_OCT = 8;
 volatile bool OctToggle = false;
 volatile int octaveMode = 0;
 
-// Pitch Bend
+// Pitch Bend + Vibrato + Arpeggio
 volatile float pitchBend = 1;
 float calZero = 0;
 volatile float vibrato = 0;
@@ -183,7 +186,7 @@ volatile float vibratoMulti[3] = {0.03, 0.06, 0.08};
 volatile float arpeggio1Multi[3][3] = {{0.6, 1.2, 1.8}, {0.4, 0.8, 1.2}, {0.2, 0.6, 1.0}};
 volatile float arpeggio2Multi[3][4] = {{0.6, 1.2, 1.8, 2.2}, {0.4, 0.8, 1.2, 1.6}, {0.2, 0.6, 1.0, 1.4}};
 
-// Chords
+// Chords + Song Bank
 volatile int intervalMajor[2] = {4, 7};
 volatile int intervalMinor[2] = {3, 7};
 volatile int intervalDiminished[2] = {3, 6};
@@ -347,10 +350,12 @@ void sampleISR()
       {
         uint32_t stepSize = current->data;
         phase_accs[i] += stepSize;
+        // Ascend
         if (phase_accs[i] < UINT32_MAX / 2)
         {
           Vout = (phase_accs[i] >> 24);
         }
+        // Descend
         else
         {
           Vout = (-phase_accs[i] >> 24);
@@ -375,6 +380,7 @@ void sampleISR()
         uint32_t stepSize = current->data;
         phase_accs[i] += stepSize;
         int index = 1027 * ((float)phase_accs[i] / (float)UINT32_MAX);
+        // Get value from look-up table
         sample += (int32_t)sinTable[index];
         current = current->next;
         i += 1;
@@ -387,7 +393,7 @@ void sampleISR()
 }
 
 
-
+// Add step size to linked list
 void addNode(LinkedList *list, const int data)
 {
   struct Node *newNode = new Node;
@@ -403,6 +409,7 @@ void addNode(LinkedList *list, const int data)
   list->tail = newNode;
 }
 
+// Delete all contents of linked list
 void deleteLinkedList(LinkedList *list)
 {
   Node *current = list->head;
@@ -419,29 +426,30 @@ void deleteLinkedList(LinkedList *list)
   list->tail = nullptr;
 }
 
+// Plays chords depending on chordType
 void playChord(int chordType, int octave, int i, LinkedList *list)
 {
-  if (chordType == 0)
+  if (chordType == 0) // MAJOR
   {
     addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 4] * pitchBend));
     addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 7] * pitchBend));
   }
-  if (chordType == 1)
+  if (chordType == 1) // MINOR
   {
     addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 3] * pitchBend));
     addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 7] * pitchBend));
   }
-  if (chordType == 2)
+  if (chordType == 2) // DIMINISHED
   {
     addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 3] * pitchBend));
     addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 6] * pitchBend));
   }
-  if (chordType == 3)
+  if (chordType == 3) // AUGMENTED
   {
     addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 4] * pitchBend));
     addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 8] * pitchBend));
   }
-  if (chordType == 4)
+  if (chordType == 4) // SEVENTH
   {
     addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 4] * pitchBend));
     addNode(list, (uint32_t)((float)stepSizes[12 * (octave - 2) + i + 7] * pitchBend));
@@ -580,12 +588,7 @@ void scanKeysTask(void *pvParameters)
   }
 }
 
-
-
-
-
-
-
+// Task that reads knobs and joystick
 void readControlsTask(void *pvParameters)
 {
   const TickType_t xFrequency = 20 / portTICK_PERIOD_MS;
@@ -620,7 +623,8 @@ void readControlsTask(void *pvParameters)
 
     functionKnob.update(keyArray[1] & 0x03); // KNOB 0       ( 0 )    ( 1 )    ( 2 )    ( 3 )
     effectKnob.update(keyArray[0] >> 2);     // KNOB 1      [4]>>2  [4]&0x03  [3]>>2  [3]&0x03
-
+    
+    // Change function of effect modifier depending on effect selected
     if (effect == 1)
     {
       vibratoFXKnob.update(keyArray[0] & 0x03);
@@ -663,7 +667,7 @@ void readControlsTask(void *pvParameters)
       showCAN = 1;
     }
 
-    // Play Song
+    // Play Song if K1 pressed
     if (((keyArray[3] & 0x02) >> 1 == 0) && buttonToggle == false)
     {
       playSong = !playSong;
@@ -1034,6 +1038,7 @@ void setup()
 
 void loop()
 {
+  // For fun, added a song bank feature (press knob1 to toggle)
   if (playSong)
   {
     songBank1();
