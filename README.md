@@ -184,4 +184,4 @@ The ```CAN_TX_Task``` is responsible for transmitting CAN messages by dequeuing 
 
 Here is the dependency graph of the tasks:
 
-![Dependency Graph](/Dependency%20Graph.png)
+![Dependency Graph](/image.png)
