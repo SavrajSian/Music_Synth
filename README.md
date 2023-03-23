@@ -103,7 +103,7 @@ In this worst case, the CPU is in use for 63.95% of the time, so therefore in re
 |```scanKeysHandle``` | 2.35%|
 |```readControlsHandle``` | 3.947%|
 |```displayKeysHandle``` | 26.08%|
-|| ```CAN_TX_TaskHandle``` & ```CAN_TX_ISR```|0.17%|
+| ```CAN_TX_TaskHandle``` & ```CAN_TX_ISR```|0.17%|
 | ```sampleISR``` | 64.04%|                 
 | ```CAN_RX_ISR``` |0.65%|   
 
